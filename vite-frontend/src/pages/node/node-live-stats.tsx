@@ -12,35 +12,10 @@ function bytes(v: number): string {
   return `${v >= 100 || i === 0 ? Math.round(v) : v.toFixed(1)}${units[i]}`;
 }
 
-function tone(v: number): string {
-  return v >= 85 ? "bg-danger" : v >= 60 ? "bg-warning" : "bg-foreground";
-}
-
-function Meter({ label, value }: { label: string; value?: number }) {
-  return (
-    <div className="min-w-0 space-y-1">
-      <div className="flex items-baseline justify-between gap-1 text-[11px] leading-none">
-        <span className="text-default-500">{label}</span>
-        <span className="tabular-nums">
-          {value === undefined ? "—" : `${Math.round(value)}%`}
-        </span>
-      </div>
-      <div className="h-[3px] overflow-hidden rounded-full bg-default-100">
-        {value !== undefined && (
-          <div
-            className={`h-full rounded-full ${tone(value)}`}
-            style={{ width: `${Math.min(100, Math.max(2, value))}%` }}
-          />
-        )}
-      </div>
-    </div>
-  );
-}
-
 /**
  * A node's live resources on its list row: CPU, memory and disk, speed
  * and this month's traffic. "row" sits at the end of a wide row, "footer"
- * under the name on narrow screens, "card" in a node card at any width.
+ * under the name on narrow screens.
  */
 export function NodeLiveStats({
   info,
@@ -50,17 +25,10 @@ export function NodeLiveStats({
   info: NodeSystemInfo | null;
   /** This month's [in, out] bytes. */
   month?: [number, number];
-  variant: "row" | "footer" | "card";
+  variant: "row" | "footer";
 }) {
   const up = info ? (info.netOutSpeed ?? info.uploadSpeed) : undefined;
   const down = info ? (info.netInSpeed ?? info.downloadSpeed) : undefined;
-  const meters = (
-    <>
-      <Meter label="CPU" value={info?.cpuUsage} />
-      <Meter label="内存" value={info?.memoryUsage} />
-      <Meter label="磁盘" value={info?.diskUsage} />
-    </>
-  );
   const rate = (v?: number) => (v === undefined ? "—" : `${bytes(v)}/s`);
   const total = month ? bytes(month[0] + month[1]) : "—";
   const monthHint =
@@ -68,32 +36,6 @@ export function NodeLiveStats({
       ? "按本地时区统计；跨月的旧小时记录按时长估算"
       : "按本地时区统计";
   const split = month ? `↑${bytes(month[1])} ↓${bytes(month[0])}` : "";
-
-  if (variant === "card") {
-    return (
-      <div className="space-y-2">
-        <div className="grid grid-cols-3 gap-3">{meters}</div>
-        <div className="grid grid-cols-2 divide-x divide-divider py-1.5 text-[11px] tabular-nums">
-          <div className="min-w-0 pr-2.5">
-            <div className="text-[10px] text-default-400">网速</div>
-            <div className="flex flex-wrap items-center gap-x-2">
-              <span className="whitespace-nowrap">↑ {rate(up)}</span>
-              <span className="whitespace-nowrap">↓ {rate(down)}</span>
-            </div>
-          </div>
-          <div className="min-w-0 px-2.5" title={`${split} ${monthHint}`}>
-            <div className="text-[10px] text-default-400">本月流量</div>
-            <div className="flex flex-wrap items-baseline gap-x-1.5">
-              <span className="font-medium">{total}</span>
-              <span className="whitespace-nowrap text-[10px] text-default-400">
-                {split}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   // List rows: one quiet line, and nothing for data the node has not sent.
   const usage = info

@@ -33,8 +33,6 @@ import {
 } from "@/components/animated-page";
 import { PageLoadingState } from "@/components/page-state";
 import { PageHeader, PageTabs, PageToolbar } from "@/components/page-kit";
-import { CARD_GRID, type CardTone, InfoCard } from "@/components/info-card";
-import { useViewMode } from "@/components/view-mode";
 import { useLocalStorageState } from "@/hooks/use-local-storage-state";
 import {
   markPageCached,
@@ -275,8 +273,6 @@ export default function InboundPage() {
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [toggling, setToggling] = useState<number | null>(null);
   const [selectMode, setSelectMode] = useState(false);
-  const [viewMode, setViewMode] = useViewMode("inbound");
-  const card = viewMode === "card";
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [batchDeleteOpen, setBatchDeleteOpen] = useState(false);
   const [batchDeleting, setBatchDeleting] = useState(false);
@@ -642,7 +638,7 @@ export default function InboundPage() {
     }
   };
 
-  const gridClass = card ? CARD_GRID : "flex flex-col";
+  const gridClass = "flex flex-col";
 
   const renderInbound = (item: InboundApiItem) => {
     const probe = item.probe?.skipped ? undefined : item.probe;
@@ -669,12 +665,9 @@ export default function InboundPage() {
         <LatencyCell
           probe={probe}
           probing={probingIds.has(item.id)}
-          variant={card ? "card" : "list"}
           onProbe={() => probeOne(item.id)}
         />
       ) : null;
-    // Cards give measured points their own block under the rows.
-    const latencyTiles = card && latency !== null && probe !== undefined;
     const activate = () =>
       selectMode ? toggleSelect(item.id) : setSheetFor(item.id);
     const dotClass = unreachable
@@ -698,7 +691,7 @@ export default function InboundPage() {
 
     const badges = (
       <>
-        <TagChips max={card ? undefined : 3} tags={item.tags} />
+        <TagChips max={3} tags={item.tags} />
         {item.outboundIpStrategy && item.outboundIpStrategy !== "auto" && (
           <Chip
             className="shrink-0 whitespace-nowrap"
@@ -763,92 +756,6 @@ export default function InboundPage() {
         )}
       </>
     );
-
-    if (card) {
-      const tone: CardTone = unreachable
-        ? "danger"
-        : running
-          ? "success"
-          : item.enabled
-            ? "warning"
-            : "default";
-
-      return (
-        <InfoCard
-          key={item.id}
-          actions={[
-            {
-              key: "share",
-              label: "分享",
-              color: "primary",
-              onPress: () => setSharing(item),
-            },
-            {
-              key: "relay",
-              label: "中转",
-              color: "secondary",
-              onPress: () => setRelaying(item),
-            },
-            {
-              key: "more",
-              label: "更多",
-              onPress: () => setSheetFor(item.id),
-            },
-          ]}
-          badges={badges}
-          headerRight={
-            <Switch
-              isDisabled={toggling === item.id}
-              isSelected={item.enabled}
-              size="sm"
-              onValueChange={() => handleToggle(item)}
-            />
-          }
-          rows={[
-            ["协议", describeInbound(item)],
-            [
-              "端口",
-              <span key="port" className="font-mono">
-                {item.port}
-              </span>,
-            ],
-            [
-              item.external ? "地址" : "服务器",
-              <span key="where" className="font-mono">
-                {item.external ? item.listen : item.nodeName}
-              </span>,
-            ],
-            [
-              "流量",
-              <span key="traffic" className="font-mono">
-                ↑ {formatTraffic(item.uploadBytes)} · ↓{" "}
-                {formatTraffic(item.downloadBytes)}
-              </span>,
-            ],
-            ...(latency && !latencyTiles
-              ? ([["延迟", latency]] as Array<[string, React.ReactNode]>)
-              : []),
-          ]}
-          selectMode={selectMode}
-          selected={selected}
-          status={
-            unreachable
-              ? "连不上"
-              : running
-                ? "运行中"
-                : item.enabled
-                  ? "异常"
-                  : "已停用"
-          }
-          title={item.name}
-          tone={tone}
-          onPress={() => setSheetFor(item.id)}
-          onSelect={() => toggleSelect(item.id)}
-        >
-          {latencyTiles ? latency : null}
-        </InfoCard>
-      );
-    }
 
     return (
       <div
@@ -1003,7 +910,6 @@ export default function InboundPage() {
                 onPress: openCreate,
               }}
               search={searchKeyword}
-              view={{ value: viewMode, onChange: setViewMode }}
               onSearch={setSearchKeyword}
             >
               {nodeOptions.length > 1 && (
@@ -1177,9 +1083,7 @@ export default function InboundPage() {
                       onToggle={() => toggleCollapsed(id)}
                     />
                     {!folded && (
-                      <div
-                        className={card ? `${gridClass} pb-3 pt-2` : gridClass}
-                      >
+                      <div className={gridClass}>
                         {g.items.map(renderInbound)}
                       </div>
                     )}

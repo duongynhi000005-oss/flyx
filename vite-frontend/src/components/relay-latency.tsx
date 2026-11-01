@@ -65,7 +65,6 @@ export function RelayLatencyCell({
       probe={latency}
       probing={probing}
       title={pathOnly ? "中转路径延迟" : "经中转到各测试点（估算）"}
-      variant="list"
       onProbe={onProbe}
     />
   );

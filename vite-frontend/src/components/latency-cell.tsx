@@ -14,9 +14,6 @@ import { RouteTag } from "@/components/route-modal";
 export const LATENCY_GOOD_MS = 100;
 export const LATENCY_FAIR_MS = 300;
 
-/** Cards show this many reference points; the rest are in the popover. */
-const CARD_POINTS = 3;
-
 type Tone = "success" | "warning" | "danger" | "default";
 
 export const TONE: Record<Tone, [string, string]> = {
@@ -75,36 +72,6 @@ export function worstPoint(points: InboundProbePoint[]) {
   );
 }
 
-function bestPoint(points: InboundProbePoint[]) {
-  return points.reduce<InboundProbePoint | undefined>(
-    (b, p) => (!b || compare(p, b) < 0 ? p : b),
-    undefined,
-  );
-}
-
-/**
- * The points a card shows: all of them when they fit, else the ones pinned
- * in settings, then the worst and the best, then configured order; shown
- * in configured order.
- */
-function cardPoints(points: InboundProbePoint[]) {
-  if (points.length <= CARD_POINTS) return points;
-  const keep = new Set<InboundProbePoint>();
-  const candidates = [
-    ...points.filter((p) => p.pinned),
-    worstPoint(points)!,
-    bestPoint(points)!,
-    ...points,
-  ];
-
-  for (const p of candidates) {
-    if (keep.size >= CARD_POINTS) break;
-    keep.add(p);
-  }
-
-  return points.filter((p) => keep.has(p));
-}
-
 function ago(ts: number) {
   const s = Math.max(0, Math.round((Date.now() - ts) / 1000));
 
@@ -147,46 +114,6 @@ function Pill({
   );
 }
 
-/** A card's reference point: its name over the colored latency. */
-function Tile({
-  point,
-  spinning,
-}: {
-  point: InboundProbePoint;
-  spinning?: boolean;
-}) {
-  const [pill, dot] = TONE[pointTone(point)];
-  const loss = point.ok ? (point.lossPct ?? 0) : 0;
-
-  return (
-    <span
-      className={`flex min-w-0 flex-col items-start overflow-hidden rounded-lg px-2 py-1 text-left ${pill}`}
-    >
-      <span className="flex w-full min-w-0 items-center gap-1 text-[11px] opacity-80">
-        {spinning ? (
-          <Loader2 className="h-2.5 w-2.5 shrink-0 animate-spin" />
-        ) : (
-          <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${dot}`} />
-        )}
-        <span className="truncate">{point.name}</span>
-      </span>
-      <span className="flex w-full items-baseline gap-1 whitespace-nowrap font-mono text-sm font-semibold">
-        {valueText(point)}
-        {loss > 0 && (
-          <span className="text-[10px] font-normal opacity-80">丢{loss}%</span>
-        )}
-      </span>
-      {/* Always its own line so tiles line up whatever the width. */}
-      {point.route && point.route !== "未识别" && (
-        <span className="mt-0.5 flex items-center gap-1">
-          <RouteTag short route={point.route} />
-          <V6Route point={point} />
-        </span>
-      )}
-    </span>
-  );
-}
-
 /** A dual-stack node's IPv6 route, shown only when it differs from IPv4. */
 function V6Route({ point }: { point: InboundProbePoint }) {
   if (
@@ -208,25 +135,22 @@ function V6Route({ point }: { point: InboundProbePoint }) {
 const stop = (e: React.SyntheticEvent) => e.stopPropagation();
 
 /**
- * The inbound's latency to each reference point. Cards show up to three
- * points side by side, list rows the worst one with a dot per other point;
- * pressing either opens every point's result and a re-probe button.
+ * The inbound's latency to each reference point: the worst one and how
+ * many others there are; pressing it opens every point's result and a
+ * re-probe button.
  */
 export function LatencyCell({
   probe,
   probing,
-  variant,
   onProbe,
   onShowRoute,
   onShowTrend,
   onEditTargets,
-  note,
   title = "到各测试点的延迟",
   footer,
 }: {
   probe?: InboundProbe;
   probing?: boolean;
-  variant: "card" | "list";
   onProbe: () => void;
   /** Opens the node's return routes; omitted where there is no node. */
   onShowRoute?: () => void;
@@ -234,8 +158,6 @@ export function LatencyCell({
   onShowTrend?: () => void;
   /** Opens the node's reference point choice. */
   onEditTargets?: () => void;
-  /** Shown before the time on cards, e.g. "自定义". */
-  note?: string;
   /** Heading of the details. */
   title?: string;
   /** Shown under the points in the details, e.g. a relay line's legs. */
@@ -265,61 +187,24 @@ export function LatencyCell({
   }
 
   const worst = worstPoint(points)!;
-  const shown = cardPoints(points);
-  const more = points.length - shown.length;
-  // Red points the card leaves out, so a hidden outage still shows.
-  const hiddenBad = points.filter(
-    (p) => !shown.includes(p) && pointTone(p) === "danger",
-  ).length;
   const others = points.filter((p) => p !== worst);
 
   return (
     <Dropdown placement="bottom-end">
       <DropdownTrigger>
-        {variant === "card" ? (
-          <button
-            className="w-full rounded-lg text-left transition-opacity hover:opacity-80"
-            type="button"
-            onClick={stop}
-            onKeyDown={stop}
-          >
-            <span className="mb-1.5 flex items-center justify-between text-sm">
-              <span className="text-default-600">延迟</span>
-              <span className="text-xs text-default-400">
-                {note ? `${note} · ` : ""}
-                {more > 0 ? `共 ${points.length} 个 · ` : ""}
-                {hiddenBad > 0 && (
-                  <span className="text-rose-600">{hiddenBad} 个异常 · </span>
-                )}
-                {probe ? ago(probe.checkedAt) : ""}
-              </span>
-            </span>
-            <span
-              className="grid gap-1.5"
-              style={{
-                gridTemplateColumns: `repeat(${shown.length}, minmax(0, 1fr))`,
-              }}
-            >
-              {shown.map((p, i) => (
-                <Tile key={p.name} point={p} spinning={probing && i === 0} />
-              ))}
-            </span>
-          </button>
-        ) : (
-          <button
-            className="inline-flex max-w-full items-center justify-end gap-1 rounded-lg transition-opacity hover:opacity-80"
-            type="button"
-            onClick={stop}
-            onKeyDown={stop}
-          >
-            <Pill label={points.length > 1} point={worst} spinning={probing} />
-            {/* The other points are in the menu; only flag that they
+        <button
+          className="inline-flex max-w-full items-center justify-end gap-1 rounded-lg transition-opacity hover:opacity-80"
+          type="button"
+          onClick={stop}
+          onKeyDown={stop}
+        >
+          <Pill label={points.length > 1} point={worst} spinning={probing} />
+          {/* The other points are in the menu; only flag that they
                 exist. */}
-            {others.length > 0 && (
-              <span className="text-xs text-default-300">+{others.length}</span>
-            )}
-          </button>
-        )}
+          {others.length > 0 && (
+            <span className="text-xs text-default-300">+{others.length}</span>
+          )}
+        </button>
       </DropdownTrigger>
       <DropdownMenu
         aria-label="延迟详情"

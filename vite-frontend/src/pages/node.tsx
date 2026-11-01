@@ -50,8 +50,6 @@ import {
   ToolbarButton,
   SelectionBar,
 } from "@/components/page-kit";
-import { CARD_GRID } from "@/components/info-card";
-import { useViewMode } from "@/components/view-mode";
 import { getRemoteSyncErrorMessage } from "@/pages/node/display";
 import { NodeTuneModal } from "@/pages/node/tune-modal";
 import { copyWithToast } from "@/utils/clipboard";
@@ -216,8 +214,6 @@ export default function NodePage({
     : protocolDisabledReason || "等待服务器上线后再设置";
 
   const [selectMode, setSelectMode] = useState(false);
-  const [viewMode, setViewMode] = useViewMode("node");
-  const card = viewMode === "card";
   const [sheetNodeId, setSheetNodeId] = useState<number | null>(null);
   const [probingIds, setProbingIds] = useState<Set<number>>(new Set());
   const [routeNode, setRouteNode] = useState<Node | null>(null);
@@ -1361,32 +1357,16 @@ export default function NodePage({
   const rowActions = useMemo(
     () => ({
       toggleSelect,
-      handleDismissExpiryReminder,
-      onOpenMonitor,
-      openInstallSelector,
-      openUpgradeModal,
-      handleRollbackNode,
-      handleEdit,
-      handleDelete,
       probeNode,
       setTargetNodes,
-      setTuneNode,
       setSheetNodeId,
       setRouteNode,
       setTrendNode,
     }),
     [
       toggleSelect,
-      handleDismissExpiryReminder,
-      onOpenMonitor,
-      openInstallSelector,
-      openUpgradeModal,
-      handleRollbackNode,
-      handleEdit,
-      handleDelete,
       probeNode,
       setTargetNodes,
-      setTuneNode,
       setSheetNodeId,
       setRouteNode,
       setTrendNode,
@@ -1475,7 +1455,6 @@ export default function NodePage({
               : undefined
           }
           search={currentSearchKeyword}
-          view={{ value: viewMode, onChange: setViewMode }}
           onSearch={setCurrentSearchKeyword}
         >
           {canUseExpiryFilter && (
@@ -1528,12 +1507,11 @@ export default function NodePage({
             items={sortableNodeIds}
             strategy={rectSortingStrategy}
           >
-            <div className={card ? CARD_GRID : "flex flex-col"}>
+            <div className="flex flex-col">
               {displayNodes.map((node) => (
                 <NodeRow
                   key={node.id}
                   actions={rowActions}
-                  card={card}
                   isDisplayFiltered={isDisplayFiltered}
                   month={monthTraffic[String(node.id)]}
                   node={node}
@@ -1541,7 +1519,6 @@ export default function NodePage({
                   progress={upgradeProgress[node.id]}
                   selectMode={selectMode}
                   selected={selectedIds.has(node.id)}
-                  usage={remoteUsageMap[node.id]}
                   wide={wide}
                 />
               ))}

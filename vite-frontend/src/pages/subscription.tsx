@@ -45,8 +45,6 @@ import {
   PageToolbar,
   ToolbarButton,
 } from "@/components/page-kit";
-import { CARD_GRID, InfoCard } from "@/components/info-card";
-import { useViewMode } from "@/components/view-mode";
 import { PageLoadingState } from "@/components/page-state";
 import {
   markPageCached,
@@ -160,35 +158,6 @@ function UsageBar({ s, track }: { s: SubscriptionItem; track: string }) {
         className={`h-full rounded-full ${tone}`}
         style={{ width: `${Math.max(2, pct)}%` }}
       />
-    </div>
-  );
-}
-
-/** Used / limit of a subscription, with a bar when it has a limit. */
-function Usage({ s, compact }: { s: SubscriptionItem; compact?: boolean }) {
-  const used = s.uploadBytes + s.downloadBytes;
-
-  return (
-    <div className={compact ? "space-y-1" : "space-y-1.5"}>
-      <div className="flex items-baseline justify-between gap-2 text-xs text-default-400">
-        <span className="tabular-nums">
-          {formatTraffic(used)}
-          {s.trafficLimit
-            ? ` / ${formatTraffic(s.trafficLimit)}`
-            : " · 不限流量"}
-        </span>
-        {!compact && (
-          <span>{s.resetDay ? `每月 ${s.resetDay} 号重置` : "不自动重置"}</span>
-        )}
-      </div>
-      {s.trafficLimit > 0 && (
-        <UsageBar s={s} track={compact ? "bg-default-100" : "bg-default-200"} />
-      )}
-      {!compact && (
-        <div className="text-xs tabular-nums text-default-400">
-          ↑ {formatTraffic(s.uploadBytes)} · ↓ {formatTraffic(s.downloadBytes)}
-        </div>
-      )}
     </div>
   );
 }
@@ -1120,7 +1089,6 @@ const PAGE = "subscription";
 export default function SubscriptionPage() {
   // A revisit shows the last data at once and reloads in the background.
   const [loading, setLoading] = useState(() => !pageCached(PAGE));
-  const [viewMode, setViewMode] = useViewMode("subscription");
   const [subs, setSubs] = useCachedState<SubscriptionItem[]>(PAGE, "subs", []);
   const [regions, setRegions] = useCachedState<string[]>(PAGE, "regions", []);
   const [ruleGroups, setRuleGroups] = useCachedState<SubRuleGroup[]>(
@@ -1365,66 +1333,6 @@ export default function SubscriptionPage() {
       </span>
     </>
   );
-  const subCard = (s: SubscriptionItem) => (
-    <InfoCard
-      key={s.id}
-      actions={[
-        {
-          key: "copy",
-          label: "复制链接",
-          color: "primary",
-          onPress: () => copyText(url(s), "订阅链接已复制"),
-        },
-        {
-          key: "import",
-          label: "导入客户端",
-          color: "secondary",
-          onPress: () => setDetail(s),
-        },
-      ]}
-      badges={
-        s.options.rules && (
-          <Chip color="primary" size="sm" variant="flat">
-            分流
-          </Chip>
-        )
-      }
-      headerRight={
-        <Switch
-          aria-label={`${s.enabled ? "停用" : "启用"} ${s.name}`}
-          isDisabled={toggling === s.id}
-          isSelected={s.enabled}
-          size="sm"
-          onValueChange={() => toggle(s)}
-        />
-      }
-      rows={[
-        ["节点", `${s.nodeCount} 个`],
-        ["节点组", sourceText(s)],
-        ["到期", s.expireTime ? expiryLabel(s.expireTime) : "永不过期"],
-        ...(s.userId
-          ? ([["用户", s.userName || `#${s.userId}`]] as Array<
-              [string, string]
-            >)
-          : []),
-        ...(s.remark ? ([["备注", s.remark]] as Array<[string, string]>) : []),
-      ]}
-      status={
-        !s.enabled
-          ? "已停用"
-          : s.active
-            ? "生效中"
-            : s.overQuota
-              ? "流量用完"
-              : "已过期"
-      }
-      title={s.name}
-      tone={!s.enabled ? "default" : s.active ? "success" : "danger"}
-      onPress={() => setDetail(s)}
-    >
-      <Usage s={s} />
-    </InfoCard>
-  );
   const row = (s: SubscriptionItem) => (
     <div
       key={s.id}
@@ -1519,11 +1427,6 @@ export default function SubscriptionPage() {
               }
         }
         search={query}
-        view={
-          tab === "subs"
-            ? { value: viewMode, onChange: setViewMode }
-            : undefined
-        }
         onSearch={setQuery}
       >
         <ToolbarButton onPress={() => setTemplatesOpen(true)}>
@@ -1555,9 +1458,7 @@ export default function SubscriptionPage() {
         />
       ) : (
         <>
-          <div className={viewMode === "card" ? CARD_GRID : "flex flex-col"}>
-            {shownSubs.map(viewMode === "card" ? subCard : row)}
-          </div>
+          <div className="flex flex-col">{shownSubs.map(row)}</div>
         </>
       )}
 

@@ -6,8 +6,7 @@ import toast from "react-hot-toast";
 
 import { useVisiblePolling } from "@/hooks/use-visible-polling";
 import { AnimatedPage } from "@/components/animated-page";
-import { PageHeader, PageTabs, PageToolbar } from "@/components/page-kit";
-import { useViewMode } from "@/components/view-mode";
+import { PageHeader, PageTabs } from "@/components/page-kit";
 import { getMonitorNodes } from "@/api";
 import { MonitorView, TunnelMonitorView } from "@/components/lazy-charts";
 import { useNodeRealtime } from "@/pages/node/use-node-realtime";
@@ -45,8 +44,6 @@ function MonitorOverview() {
   const [nodesLoading, setNodesLoading] = useState(false);
   const [nodesError, setNodesError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<MonitorTab>("nodes");
-  const [viewMode, setViewMode] = useViewMode("monitor");
-  const card = viewMode === "card";
 
   const [realtimeNodeStatus, setRealtimeNodeStatus] = useState<
     Record<number, "online" | "offline">
@@ -240,7 +237,6 @@ function MonitorOverview() {
         value={activeTab}
         onChange={setActiveTab}
       />
-      <PageToolbar view={{ value: viewMode, onChange: setViewMode }} />
 
       {nodesError && activeTab === "nodes" && (
         <div className="mb-3 border-b border-divider py-2 text-sm text-default-500">
@@ -250,13 +246,12 @@ function MonitorOverview() {
 
       {activeTab === "nodes" ? (
         <MonitorView
-          card={card}
           nodeMap={nodeMap}
           refreshing={nodesLoading}
           onRefresh={() => void loadNodes()}
         />
       ) : (
-        <TunnelMonitorView card={card} />
+        <TunnelMonitorView />
       )}
     </AnimatedPage>
   );

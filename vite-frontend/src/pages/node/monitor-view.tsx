@@ -29,7 +29,6 @@ import {
   Trash2,
   Edit,
   Activity,
-  Clock,
   Play,
   Server,
   ArrowLeft,
@@ -70,12 +69,6 @@ import {
   DropdownItem,
 } from "@/shadcn-bridge/heroui/dropdown";
 import { Card, CardBody, CardHeader } from "@/shadcn-bridge/heroui/card";
-import { Progress } from "@/shadcn-bridge/heroui/progress";
-import {
-  DistroIcon,
-  getDistroColor,
-  parseDistroFromVersion,
-} from "@/components/distro-icon";
 import {
   mergeMonitorResults,
   storeMonitorHistory,
@@ -90,8 +83,6 @@ interface MonitorViewProps {
   >;
   onRefresh?: () => void;
   refreshing?: boolean;
-  /** Show the nodes as cards. */
-  card?: boolean;
   /** Opens straight into this node's detail, without the overview. */
   focusNodeId?: number | null;
   /** With focusNodeId: the back button leaves the view. */
@@ -273,136 +264,6 @@ function NodeMetricsStrip({ metric }: { metric: RealtimeNodeMetric }) {
         />
       </div>
     </div>
-  );
-}
-
-/** A node in the card view (the original upstream design). */
-function ServerCard({
-  node,
-  metric,
-  onPress,
-}: {
-  node: any;
-  metric: RealtimeNodeMetric | null;
-  onPress?: () => void;
-}) {
-  const isOnline = node.connectionStatus === "online";
-  const distro = parseDistroFromVersion(node.version);
-  const distroColor = getDistroColor(distro);
-
-  return (
-    <Card
-      className="group relative transition-colors hover:bg-default-50 h-full flex flex-col cursor-pointer"
-      onClick={onPress}
-    >
-      {/* Dynamic top gradient bar based on status */}
-      <div
-        className={`absolute top-0 left-0 right-0 h-1 ${isOnline ? "bg-success" : "bg-danger"}`}
-      />
-
-      {/* Decorative background glow */}
-      <div
-        className={`absolute -right-8 -top-8 w-24 h-24 rounded-full blur-2xl opacity-10 transition-opacity group-hover:opacity-20 ${isOnline ? "bg-success" : "bg-danger"}`}
-      />
-
-      <CardHeader className="pb-2 pt-5 px-5 flex flex-row justify-between items-start gap-4">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="relative flex-shrink-0">
-            <div className="w-8 h-8 rounded-md bg-default-100 flex items-center justify-center">
-              <DistroIcon
-                className="w-5 h-5"
-                distro={distro}
-                style={{ color: isOnline ? distroColor : undefined }}
-              />
-            </div>
-            <span
-              className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-background ${isOnline ? "bg-success" : "bg-danger"}`}
-            />
-          </div>
-          <div className="flex flex-col min-w-0">
-            <h3 className="font-semibold text-foreground text-sm truncate">
-              {node.name}
-            </h3>
-            <div className="flex items-center gap-1.5 text-[11px] text-default-500 mt-0.5">
-              <span className="font-mono">{isOnline ? "在线" : "离线"}</span>
-            </div>
-          </div>
-        </div>
-      </CardHeader>
-
-      <CardBody className="py-3 px-5 flex-1 flex flex-col justify-end gap-4 z-10 w-full overflow-hidden">
-        <div className="grid grid-cols-2 gap-5 w-full">
-          <div className="space-y-1.5 min-w-0">
-            <div className="flex justify-between items-center text-xs">
-              <span className="text-default-500">CPU</span>
-              <span className="font-mono font-medium">
-                {isOnline && metric ? `${metric.cpuUsage.toFixed(1)}%` : "-"}
-              </span>
-            </div>
-            <Progress
-              className="h-1"
-              color={getColorByUsage(metric?.cpuUsage)}
-              value={isOnline && metric ? metric.cpuUsage : 0}
-            />
-          </div>
-          <div className="space-y-1.5 min-w-0">
-            <div className="flex justify-between items-center text-xs">
-              <span className="text-default-500">内存</span>
-              <span className="font-mono font-medium">
-                {isOnline && metric ? `${metric.memoryUsage.toFixed(1)}%` : "-"}
-              </span>
-            </div>
-            <Progress
-              className="h-1"
-              color={getColorByUsage(metric?.memoryUsage)}
-              size="sm"
-              value={isOnline && metric ? metric.memoryUsage : 0}
-            />
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between p-2.5 rounded-lg bg-default-50 dark:bg-default-100/30 border border-divider mt-1 w-full">
-          <div className="flex flex-col gap-0.5 min-w-0 flex-1">
-            <div className="flex items-center gap-1 text-[10px] text-default-500">
-              <span className="text-primary-500 inline-block font-bold">↑</span>
-              <span>上传</span>
-            </div>
-            <span className="font-mono text-xs font-semibold truncate">
-              {isOnline && metric
-                ? formatBytesPerSecond(metric.netOutSpeed)
-                : "-"}
-            </span>
-          </div>
-          <div className="w-px h-6 bg-divider mx-2" />
-          <div className="flex flex-col gap-0.5 items-end min-w-0 flex-1">
-            <div className="flex items-center gap-1 text-[10px] text-default-500">
-              <span>下载</span>
-              <span className="text-success-500 inline-block font-bold">↓</span>
-            </div>
-            <span className="font-mono text-xs font-semibold truncate">
-              {isOnline && metric
-                ? formatBytesPerSecond(metric.netInSpeed)
-                : "-"}
-            </span>
-          </div>
-        </div>
-
-        <div className="flex justify-between items-center mt-1 pt-3 border-t border-divider/50 w-full overflow-hidden">
-          <div className="flex items-center gap-1.5 text-[11px] text-default-500 min-w-0">
-            <Clock className="w-3.5 h-3.5 text-default-400 shrink-0" />
-            <span className="font-mono truncate">
-              {metric ? formatUptime(metric.uptime) : "-"}
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5 text-[11px] text-default-500 shrink-0 ml-2">
-            <Activity className="w-3.5 h-3.5 text-default-400" />
-            <span className="font-mono">
-              Load: {metric ? metric.load1.toFixed(2) : "-"}
-            </span>
-          </div>
-        </div>
-      </CardBody>
-    </Card>
   );
 }
 
@@ -644,7 +505,6 @@ export function MonitorView({
   nodeMap,
   onRefresh,
   refreshing,
-  card,
   focusNodeId = null,
   onBack,
 }: MonitorViewProps) {
@@ -1457,20 +1317,6 @@ export function MonitorView({
 
           {nodes.length === 0 ? (
             <EmptyHint text="暂无服务器" />
-          ) : card ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {nodes.map((node) => (
-                <ServerCard
-                  key={node.id}
-                  metric={realtimeNodeMetrics[node.id] || null}
-                  node={node}
-                  onPress={() => {
-                    setDetailNodeId(node.id);
-                    setSelectedNodeId(node.id);
-                  }}
-                />
-              ))}
-            </div>
           ) : (
             <ListGroup>
               {nodes.map((node) => {

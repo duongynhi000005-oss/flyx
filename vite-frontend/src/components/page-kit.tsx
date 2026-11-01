@@ -1,10 +1,8 @@
 import type * as React from "react";
-import type { ViewMode } from "@/components/view-mode";
 
 import { MoreHorizontal, Search, X } from "lucide-react";
 
 import { AnimatedPage } from "@/components/animated-page";
-import { ViewModeToggle } from "@/components/view-mode";
 import { Button } from "@/shadcn-bridge/heroui/button";
 import { Checkbox } from "@/shadcn-bridge/heroui/checkbox";
 import {
@@ -138,7 +136,6 @@ export function PageToolbar({
   children,
   more,
   primary,
-  view,
 }: {
   search?: string;
   onSearch?: (v: string) => void;
@@ -152,8 +149,6 @@ export function PageToolbar({
    * action of its own.
    */
   primary?: PageAction;
-  /** The list / card switch, kept at the right end. */
-  view?: { value: ViewMode; onChange: (m: ViewMode) => void };
 }) {
   const actions = (more ?? []).filter(Boolean);
 
@@ -188,7 +183,6 @@ export function PageToolbar({
       )}
       {children}
       <div className="ml-auto flex shrink-0 items-center gap-2">
-        {view && <ViewModeToggle value={view.value} onChange={view.onChange} />}
         {actions.length > 0 && (
           <Dropdown placement="bottom-end">
             <DropdownTrigger>

@@ -22,14 +22,11 @@ import {
   PageToolbar,
   ToolbarButton,
 } from "@/components/page-kit";
-import { CARD_GRID, InfoCard } from "@/components/info-card";
 import { RelayLatencyCell } from "@/components/relay-latency";
-import { useViewMode } from "@/components/view-mode";
 import ForwardPage from "@/pages/forward";
 import { RelayModal } from "@/pages/inbound/relay-modal";
 import TunnelPage from "@/pages/tunnel";
 import { TunnelMonitorView } from "@/components/lazy-charts";
-import { Button } from "@/shadcn-bridge/heroui/button";
 import { Chip } from "@/shadcn-bridge/heroui/chip";
 
 type RelayTab = "lines" | "tunnels" | "rules" | "quality";
@@ -112,14 +109,7 @@ function RelayLines({
 
 /** Tunnel latency, throughput and errors over time (was 监控 → 隧道). */
 function QualityView() {
-  const [viewMode, setViewMode] = useViewMode("monitor");
-
-  return (
-    <div className="space-y-3">
-      <PageToolbar view={{ value: viewMode, onChange: setViewMode }} />
-      <TunnelMonitorView card={viewMode === "card"} />
-    </div>
-  );
+  return <TunnelMonitorView />;
 }
 
 const LINES_PAGE = "relay-lines";
@@ -141,8 +131,6 @@ function LinesView() {
   const [editing, setEditing] = useState<InboundApiItem | null>(null);
   const [onlyWithRelays, setOnlyWithRelays] = useState(false);
   const [query, setQuery] = useState("");
-  const [viewMode, setViewMode] = useViewMode("relay");
-  const card = viewMode === "card";
   const [probingIds, setProbingIds] = useState<Set<number>>(new Set());
   const loadingRef = useRef(false);
   // A reload asked for during a silent poll (after an edit) runs after it.
@@ -263,7 +251,6 @@ function LinesView() {
       <PageToolbar
         placeholder="搜索节点名称"
         search={query}
-        view={{ value: viewMode, onChange: setViewMode }}
         onSearch={setQuery}
       >
         <ToolbarButton
@@ -290,7 +277,7 @@ function LinesView() {
           }
         />
       ) : (
-        <div className={card ? CARD_GRID : "grid grid-cols-1 gap-2"}>
+        <div className="flex flex-col">
           {shown.map((i) => {
             const lines = byInbound.get(i.id) ?? [];
             const broken = lines.some(
@@ -304,69 +291,6 @@ function LinesView() {
             const lineList = lines.length > 0 && (
               <RelayLines lines={lines} renderLatency={latencyOf} />
             );
-
-            if (card) {
-              return (
-                <InfoCard
-                  key={i.id}
-                  actions={
-                    lines.length === 0
-                      ? [
-                          {
-                            key: "add",
-                            label: "添加中转",
-                            color: "primary",
-                            onPress: () => setEditing(i),
-                          },
-                        ]
-                      : undefined
-                  }
-                  badges={
-                    i.relayOnly && (
-                      <Chip size="sm" variant="flat">
-                        仅中转
-                      </Chip>
-                    )
-                  }
-                  headerRight={
-                    lines.length > 0 && (
-                      <Button
-                        className="h-7 min-w-0 px-2.5 text-xs"
-                        size="sm"
-                        variant="light"
-                        onPress={() => setEditing(i)}
-                      >
-                        管理
-                      </Button>
-                    )
-                  }
-                  rows={[]}
-                  status={
-                    lines.length === 0
-                      ? "无中转"
-                      : broken
-                        ? "有暂停"
-                        : `${lines.length} 条中转`
-                  }
-                  title={i.name}
-                  tone={
-                    lines.length === 0
-                      ? "default"
-                      : broken
-                        ? "warning"
-                        : "success"
-                  }
-                  onPress={() => setEditing(i)}
-                >
-                  <div className="space-y-2">
-                    <p className="truncate text-xs text-default-500">
-                      节点：{landing}
-                    </p>
-                    {lineList}
-                  </div>
-                </InfoCard>
-              );
-            }
 
             return (
               <ListRow
