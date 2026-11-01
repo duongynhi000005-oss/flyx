@@ -4,7 +4,6 @@ import toast from "react-hot-toast";
 import { Button } from "@/shadcn-bridge/heroui/button";
 import { Input } from "@/shadcn-bridge/heroui/input";
 import { Card, CardBody, CardHeader } from "@/shadcn-bridge/heroui/card";
-import { title } from "@/components/primitives";
 import { updatePassword } from "@/api";
 import DefaultLayout from "@/layouts/default";
 import { safeLogout } from "@/utils/logout";
@@ -125,7 +124,7 @@ export default function ChangePasswordPage() {
                 </svg>
               </div>
 
-              <h1 className={title({ size: "sm" })}>安全提醒</h1>
+              <h1 className="text-xl font-semibold tracking-tight">安全提醒</h1>
               <p className="text-small text-default-500 mt-2 text-center">
                 检测到您使用的是默认账号密码，为了您的账户安全，请立即修改
               </p>

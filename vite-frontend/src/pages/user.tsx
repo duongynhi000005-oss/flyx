@@ -2,7 +2,6 @@ import type { SubscriptionItem } from "@/api";
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import toast from "react-hot-toast";
-import { parseDate } from "@internationalized/date";
 
 import { ActionSheet } from "@/components/action-sheet";
 import {
@@ -83,6 +82,13 @@ import {
   TRAFFIC_UNIT_MIB,
   type TrafficUnit,
 } from "@/utils/traffic";
+
+/** A "YYYY-MM-DD" date for the date picker, which takes plain parts. */
+const calendarDate = (ymd: string) => {
+  const [year, month, day] = ymd.split("-").map(Number);
+
+  return { year, month, day };
+};
 
 // 工具函数
 const formatFlow = formatTraffic;
@@ -1481,9 +1487,7 @@ export default function UserPage({ embedded = false }: { embedded?: boolean }) {
                 label="过期时间"
                 value={
                   userForm.expTime
-                    ? (parseDate(
-                        userForm.expTime.toISOString().split("T")[0],
-                      ) as any)
+                    ? calendarDate(userForm.expTime.toISOString().split("T")[0])
                     : null
                 }
                 onChange={(date) => {
@@ -2049,11 +2053,11 @@ export default function UserPage({ embedded = false }: { embedded?: boolean }) {
                     label="到期时间"
                     value={
                       editTunnelForm.expTime
-                        ? (parseDate(
+                        ? calendarDate(
                             new Date(editTunnelForm.expTime)
                               .toISOString()
                               .split("T")[0],
-                          ) as any)
+                          )
                         : null
                     }
                     onChange={(date) => {
