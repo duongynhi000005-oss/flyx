@@ -297,7 +297,7 @@ export default function MySubscriptionsPage() {
   const several = items.length > 1;
 
   return (
-    <AnimatedPage className="px-4 py-6 lg:px-10 lg:py-8">
+    <AnimatedPage className="mx-auto max-w-3xl px-4 py-6 lg:px-10 lg:py-8">
       <PageHeader
         description="管理员分配给你的订阅：一键导入客户端，查看流量和到期时间"
         title="我的订阅"
@@ -305,7 +305,7 @@ export default function MySubscriptionsPage() {
       {items.length === 0 ? (
         <EmptyHint text="还没有分配给你的订阅，请联系管理员" />
       ) : (
-        <div className="max-w-2xl divide-y divide-divider">
+        <div className="divide-y divide-divider">
           {items.map((s) => (
             <SubscriptionCard
               key={s.id}

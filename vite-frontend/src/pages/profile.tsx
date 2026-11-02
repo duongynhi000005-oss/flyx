@@ -372,7 +372,7 @@ export default function ProfilePage() {
 
   return (
     <div className="flex min-h-full flex-col px-4 py-6 lg:px-10 lg:py-8">
-      <div className="w-full max-w-2xl flex-1">
+      <div className="mx-auto w-full max-w-2xl flex-1">
         <PageHeader
           description={isH5 ? undefined : "你的账户和登录方式"}
           title={isH5 ? "更多" : "账户与登录"}

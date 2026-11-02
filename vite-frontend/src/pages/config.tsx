@@ -1549,7 +1549,7 @@ export default function ConfigPage() {
     .join(" · ");
 
   return (
-    <AnimatedPage className="max-w-3xl px-4 py-6 lg:px-10 lg:py-8">
+    <AnimatedPage className="mx-auto max-w-3xl px-4 py-6 lg:px-10 lg:py-8">
       <PageHeader
         description="面板名称、登录安全、通知、备份与升级"
         title="网站配置"

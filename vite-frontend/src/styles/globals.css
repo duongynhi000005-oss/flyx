@@ -156,6 +156,21 @@ body {
   overflow-x: hidden;
 }
 
+/* Large screens (2K and up at 100% scaling): sizes are in rem, so a larger
+   root font scales text, spacing, the sidebar and the content width
+   together instead of leaving a small page in a wide window. */
+@media (min-width: 1920px) {
+  html {
+    font-size: 112.5%;
+  }
+}
+
+@media (min-width: 2400px) {
+  html {
+    font-size: 125%;
+  }
+}
+
 .safe-top {
   padding-top: var(--safe-area-top);
 }
