@@ -44,7 +44,12 @@ import {
   LatencySettings,
   latencySummary,
 } from "@/pages/config/latency-card";
-import { ConfigSection, Field, SubHeading } from "@/pages/config/section";
+import {
+  ConfigLayoutContext,
+  ConfigSection,
+  Field,
+  SubHeading,
+} from "@/pages/config/section";
 import { GistBackup } from "@/pages/config/gist-backup";
 import { isAdmin } from "@/utils/auth";
 import { getCachedConfigs, configCache, updateSiteConfig } from "@/config/site";
@@ -329,6 +334,19 @@ type SectionKey =
   | "backup"
   | "system";
 
+// The groups in page order, for the desktop nav.
+const SECTIONS: Array<[SectionKey, string]> = [
+  ["basic", "基本"],
+  ["appearance", "外观"],
+  ["security", "安全与登录"],
+  ["network", "服务器与监控"],
+  ["latency", "延迟测试点"],
+  ["notify", "通知"],
+  ["announcement", "公告"],
+  ["backup", "备份与恢复"],
+  ["system", "系统与升级"],
+];
+
 // 每个分组包含的配置项，用于判断分组是否有未保存的修改
 const SECTION_CONFIG_KEYS: Partial<Record<SectionKey, string[]>> = {
   latency: [LATENCY_TARGETS_KEY],
@@ -400,31 +418,20 @@ function panelMirrorURL(ip: string): string {
 export default function ConfigPage() {
   const navigate = useNavigate();
   const isH5 = useH5Mode();
-  const [openSections, setOpenSections] = useState<Set<SectionKey>>(
-    () => new Set(),
-  );
-
-  const toggleSection = (key: SectionKey) => {
-    const opening = !openSections.has(key);
-
-    setOpenSections((prev) => {
-      if (isH5) return opening ? new Set([key]) : new Set();
-      const next = new Set(prev);
-
-      if (opening) next.add(key);
-      else next.delete(key);
-
-      return next;
-    });
-
-    // 手机上只展开一个分组，上方分组收起后把当前分组滚回视野
-    if (opening && isH5) {
-      requestAnimationFrame(() =>
-        document
-          .getElementById(`config-${key}`)
-          ?.scrollIntoView({ block: "start", behavior: "smooth" }),
-      );
-    }
+  // Desktop shows one group beside the nav; a phone lists the groups and
+  // opens one at a time.
+  const [active, setActive] = useState<SectionKey | null>(null);
+  const shown: SectionKey | null = active ?? (isH5 ? null : "basic");
+  const selectSection = (key: SectionKey | null) => {
+    setActive(key);
+    requestAnimationFrame(() =>
+      document.querySelector("main")?.scrollTo({ top: 0 }),
+    );
+  };
+  const layout = {
+    mode: isH5 ? ("stack" as const) : ("split" as const),
+    active: shown,
+    select: (id: string | null) => selectSection(id as SectionKey | null),
   };
   const initialConfigs = getInitialConfigs();
   const [configs, setConfigs] =
@@ -737,9 +744,7 @@ export default function ConfigPage() {
 
     if (intervalError) {
       toast.error(intervalError);
-      setOpenSections((prev) =>
-        isH5 ? new Set(["network"]) : new Set([...prev, "network"]),
-      );
+      selectSection("network");
 
       return;
     }
@@ -1518,9 +1523,7 @@ export default function ConfigPage() {
 
   const sectionProps = (key: SectionKey) => ({
     id: key,
-    open: openSections.has(key),
     changed: sectionChanged(key),
-    onToggle: () => toggleSection(key),
   });
 
   const onOff = (key: string, on = "开", off = "关") =>
@@ -1549,347 +1552,396 @@ export default function ConfigPage() {
     .join(" · ");
 
   return (
-    <AnimatedPage className="mx-auto max-w-3xl px-4 py-6 lg:px-10 lg:py-8">
+    <AnimatedPage className="mx-auto max-w-5xl px-4 py-6 lg:px-10 lg:py-8">
       <PageHeader
         description="面板名称、登录安全、通知、备份与升级"
         title="网站配置"
       />
 
-      <div className="border-t border-divider">
-        <ConfigSection
-          {...sectionProps("basic")}
-          summary={`${configs.app_name || "未设置名称"} · ${
-            configs.ip || "未填后端地址"
-          }`}
-          title="基本"
-        >
-          {renderItem("app_name")}
-          {renderItem("ip")}
-          {renderItem("panel_domain")}
-          {renderItem("app_logo")}
-          {renderItem("app_favicon")}
-          {renderItem("hide_footer_brand")}
-        </ConfigSection>
-
-        <ConfigSection
-          {...sectionProps("appearance")}
-          summary={`${describeBackground(configs.app_bg_image)} · 规则精简模式${onOff(
-            "forward_compact_mode",
-          )}`}
-          title="外观"
-        >
-          {renderItem("app_bg_image")}
-          {renderItem("forward_compact_mode")}
-          <SubHeading>主题（点选即生效，不需要保存）</SubHeading>
-          <div className="[&_[data-slot=card-content]]:p-0! [&_h2]:hidden [&>[data-slot=card]]:rounded-none! [&>[data-slot=card]]:border-0! [&>[data-slot=card]]:bg-none! [&>[data-slot=card]]:shadow-none! [&>[data-slot=card]]:backdrop-blur-none!">
-            <ThemeSettings />
-          </div>
-        </ConfigSection>
-
-        <ConfigSection
-          {...sectionProps("security")}
-          summary={`登录验证码${onOff("captcha_enabled")} · GitHub 登录${onOff(
-            "github_login_enabled",
-          )} · 转发到内网地址${onOff(
-            "allow_local_remote_addr",
-            "允许",
-            "禁止",
-          )} · 拉取内网订阅${onOff("fetch_allow_local", "允许", "禁止")}`}
-          title="安全与登录"
-        >
-          {renderItem("captcha_enabled")}
-          {renderItem("cloudflare_site_key")}
-          {renderItem("cloudflare_secret_key")}
-          {renderItem("github_login_enabled")}
-          {renderItem("github_oauth_client_id")}
-          {renderItem("github_oauth_secret")}
-          {renderItem("admin_password_login_disabled")}
-          {renderItem("allow_local_remote_addr")}
-          {renderItem("fetch_allow_local")}
-        </ConfigSection>
-
-        <ConfigSection
-          {...sectionProps("network")}
-          summary={`${tunnelQualitySummary} · 监控保留 ${
-            configs.monitor_retention_days || 7
-          } 天 · GitHub 加速${onOff("github_proxy_enabled")}`}
-          title="服务器与监控"
-        >
-          {renderItem("monitor_tunnel_quality_enabled")}
-          {renderItem(TUNNEL_QUALITY_INTERVAL_CONFIG_KEY)}
-          {renderItem("monitor_retention_days")}
-          {renderItem("github_proxy_enabled")}
-          {renderItem("github_proxy_url")}
-        </ConfigSection>
-
-        <ConfigSection
-          {...sectionProps("latency")}
-          summary={latencySummary(configs)}
-          title="延迟测试点"
-        >
-          <LatencySettings configs={configs} onChange={handleConfigChange} />
-        </ConfigSection>
-
-        <ConfigSection
-          {...sectionProps("notify")}
-          summary={notifySummary(configs)}
-          title="通知"
-        >
-          <NotifySettings
-            configs={configs}
-            originalConfigs={originalConfigs}
-            onChange={handleConfigChange}
-          />
-        </ConfigSection>
-
-        <ConfigSection
-          {...sectionProps("announcement")}
-          summary={
-            announcementLoading
-              ? "加载中..."
-              : announcement.enabled === 1
-                ? "首页显示中（单独保存）"
-                : "未启用（单独保存）"
+      <ConfigLayoutContext.Provider value={layout}>
+        <div
+          className={
+            isH5
+              ? shown === null
+                ? "border-t border-divider"
+                : ""
+              : "grid grid-cols-[11rem_minmax(0,1fr)] items-start gap-10"
           }
-          title="公告"
         >
-          {announcementLoading ? (
-            <div className="flex justify-center py-4">
-              <Spinner size="sm" />
-            </div>
-          ) : (
-            <>
-              <Field inline help="启用后在首页顶部显示" label="显示公告">
-                <Switch
-                  aria-label="显示公告"
-                  isSelected={announcement.enabled === 1}
-                  size="sm"
-                  onValueChange={(checked) =>
-                    setAnnouncement({
-                      ...announcement,
-                      enabled: checked ? 1 : 0,
-                    })
-                  }
-                />
-              </Field>
-
-              <Field help="支持 Markdown，链接在新标签页打开" label="公告内容">
-                <Textarea
-                  aria-label="公告内容"
-                  minRows={4}
-                  placeholder="例如：**加粗**、[链接](https://example.com)、- 列表"
-                  value={announcement.content}
-                  variant="bordered"
-                  onChange={(e) =>
-                    setAnnouncement({
-                      ...announcement,
-                      content: e.target.value,
-                    })
-                  }
-                />
-              </Field>
-
-              <div className="flex items-center justify-between gap-3 border-t border-divider pt-3">
-                <span className="text-xs text-default-500">
-                  公告单独保存，不随下方“保存”提交
-                </span>
-                <Button
-                  className="shrink-0"
-                  color="primary"
-                  isLoading={announcementSaving}
-                  size="sm"
-                  onPress={saveAnnouncement}
+          {!isH5 && (
+            <nav aria-label="设置分组" className="sticky top-6 space-y-0.5">
+              {SECTIONS.map(([key, label]) => (
+                <button
+                  key={key}
+                  aria-current={shown === key ? "page" : undefined}
+                  className={`flex h-9 w-full items-center justify-between rounded-md px-3 text-left text-sm transition-colors ${
+                    shown === key
+                      ? "bg-default-100 font-medium text-foreground"
+                      : "text-default-500 hover:bg-default-50 hover:text-foreground"
+                  }`}
+                  type="button"
+                  onClick={() => selectSection(key)}
                 >
-                  保存公告
-                </Button>
-              </div>
-            </>
+                  {label}
+                  {sectionChanged(key) && (
+                    <span
+                      className="h-1.5 w-1.5 rounded-full bg-warning"
+                      title="未保存"
+                    />
+                  )}
+                </button>
+              ))}
+            </nav>
           )}
-        </ConfigSection>
-
-        <ConfigSection
-          {...sectionProps("backup")}
-          summary={
-            importing
-              ? "正在导入..."
-              : exporting
-                ? "正在导出..."
-                : "导出或导入 JSON 备份"
-          }
-          title="备份与恢复"
-        >
-          <Field
-            inline
-            help={`选择数据类型，导出为 JSON 文件；已选 ${exportTypes.length} / ${BACKUP_TYPE_VALUES.length}`}
-            label="导出数据"
-          >
-            <Button
-              isLoading={exporting}
-              size="sm"
-              variant="flat"
-              onPress={() => setExportSelectorOpen(true)}
+          <div className={isH5 ? "" : "min-w-0"}>
+            <ConfigSection
+              {...sectionProps("basic")}
+              summary={`${configs.app_name || "未设置名称"} · ${
+                configs.ip || "未填后端地址"
+              }`}
+              title="基本"
             >
-              {exporting ? "导出中..." : "选择并导出"}
-            </Button>
-          </Field>
+              {renderItem("app_name")}
+              {renderItem("ip")}
+              {renderItem("panel_domain")}
+              {renderItem("app_logo")}
+              {renderItem("app_favicon")}
+              {renderItem("hide_footer_brand")}
+            </ConfigSection>
 
-          <input
-            ref={backupFileInputRef}
-            accept=".json"
-            className="hidden"
-            type="file"
-            onChange={handleFileChange}
-          />
-          <Field
-            inline
-            help={
-              importFileName
-                ? `已选择：${importFileName}`
-                : `从备份文件恢复所选类型；已选 ${importTypes.length} / ${BACKUP_TYPE_VALUES.length}`
-            }
-            label="导入数据"
-          >
-            <Button
-              isLoading={importing}
-              size="sm"
-              variant="flat"
-              onPress={() => setImportSelectorOpen(true)}
+            <ConfigSection
+              {...sectionProps("appearance")}
+              summary={`${describeBackground(configs.app_bg_image)} · 规则精简模式${onOff(
+                "forward_compact_mode",
+              )}`}
+              title="外观"
             >
-              {importing ? "导入中..." : "选择并导入"}
-            </Button>
-          </Field>
+              {renderItem("app_bg_image")}
+              {renderItem("forward_compact_mode")}
+              <SubHeading>主题（点选即生效，不需要保存）</SubHeading>
+              <div className="[&_[data-slot=card-content]]:p-0! [&_h2]:hidden [&>[data-slot=card]]:rounded-none! [&>[data-slot=card]]:border-0! [&>[data-slot=card]]:bg-none! [&>[data-slot=card]]:shadow-none! [&>[data-slot=card]]:backdrop-blur-none!">
+                <ThemeSettings />
+              </div>
+            </ConfigSection>
 
-          <GistBackup />
-        </ConfigSection>
+            <ConfigSection
+              {...sectionProps("security")}
+              summary={`登录验证码${onOff("captcha_enabled")} · GitHub 登录${onOff(
+                "github_login_enabled",
+              )} · 转发到内网地址${onOff(
+                "allow_local_remote_addr",
+                "允许",
+                "禁止",
+              )} · 拉取内网订阅${onOff("fetch_allow_local", "允许", "禁止")}`}
+              title="安全与登录"
+            >
+              {renderItem("captcha_enabled")}
+              {renderItem("cloudflare_site_key")}
+              {renderItem("cloudflare_secret_key")}
+              {renderItem("github_login_enabled")}
+              {renderItem("github_oauth_client_id")}
+              {renderItem("github_oauth_secret")}
+              {renderItem("admin_password_login_disabled")}
+              {renderItem("allow_local_remote_addr")}
+              {renderItem("fetch_allow_local")}
+            </ConfigSection>
 
-        <ConfigSection
-          {...sectionProps("system")}
-          summary={systemSummary}
-          title="系统与升级"
-        >
-          <Field inline help="后端数据库占用空间，仅供参考" label="数据库占用">
-            <span className="text-sm font-medium">{storageSummary}</span>
-          </Field>
+            <ConfigSection
+              {...sectionProps("network")}
+              summary={`${tunnelQualitySummary} · 监控保留 ${
+                configs.monitor_retention_days || 7
+              } 天 · GitHub 加速${onOff("github_proxy_enabled")}`}
+              title="服务器与监控"
+            >
+              {renderItem("monitor_tunnel_quality_enabled")}
+              {renderItem(TUNNEL_QUALITY_INTERVAL_CONFIG_KEY)}
+              {renderItem("monitor_retention_days")}
+              {renderItem("github_proxy_enabled")}
+              {renderItem("github_proxy_url")}
+            </ConfigSection>
 
-          <SubHeading>面板自升级</SubHeading>
-          {systemUpgradeLoading ? (
-            <div className="flex items-center gap-2 text-sm text-default-500">
-              <Spinner size="sm" />
-              正在加载升级状态...
-            </div>
-          ) : (
-            <>
-              <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1.5 text-sm">
-                <dt className="text-default-500">当前版本</dt>
-                <dd>
-                  {systemUpgradeInfo?.currentVersion || "未获取到版本信息"}
-                </dd>
-                <dt className="text-default-500">最新版本</dt>
-                <dd>
-                  {systemUpgradeInfo?.latestVersion || "未获取到可用版本"}
-                  {!systemUpgradeInfo?.latestVersion &&
-                    systemUpgradeInfo?.reason && (
-                      <p className="break-all text-xs text-default-500">
-                        {systemUpgradeInfo.reason}
-                      </p>
-                    )}
-                </dd>
-                <dt className="text-default-500">升级能力</dt>
-                <dd>
-                  {systemUpgradeInfo?.capability.capable
-                    ? "可升级"
-                    : "当前不可升级"}
-                </dd>
-                <dt className="text-default-500">部署目录</dt>
-                <dd className="break-all">
-                  {systemUpgradeInfo?.capability.deployDir ||
-                    "未获取到部署目录"}
-                </dd>
-                <dt className="text-default-500">后端容器</dt>
-                <dd className="break-all">
-                  {systemUpgradeInfo?.capability.backendContainer ||
-                    "未获取到容器信息"}
-                </dd>
-              </dl>
+            <ConfigSection
+              {...sectionProps("latency")}
+              summary={latencySummary(configs)}
+              title="延迟测试点"
+            >
+              <LatencySettings
+                configs={configs}
+                onChange={handleConfigChange}
+              />
+            </ConfigSection>
 
-              {!systemUpgradeInfo?.capability.capable && (
-                <div className="rounded-lg border border-warning-200 bg-warning-50 px-3 py-2 text-warning-800 dark:border-warning-900/40 dark:bg-warning-950/30 dark:text-warning-200">
-                  <p className="text-xs font-medium">当前无法升级</p>
-                  <ul className="mt-1 list-disc space-y-1 pl-4 text-xs">
-                    {(systemUpgradeInfo?.capability.reasons?.length
-                      ? systemUpgradeInfo.capability.reasons
-                      : ["暂未获取到不可升级原因"]
-                    ).map((reason) => (
-                      <li key={reason}>{reason}</li>
-                    ))}
-                  </ul>
+            <ConfigSection
+              {...sectionProps("notify")}
+              summary={notifySummary(configs)}
+              title="通知"
+            >
+              <NotifySettings
+                configs={configs}
+                originalConfigs={originalConfigs}
+                onChange={handleConfigChange}
+              />
+            </ConfigSection>
+
+            <ConfigSection
+              {...sectionProps("announcement")}
+              summary={
+                announcementLoading
+                  ? "加载中..."
+                  : announcement.enabled === 1
+                    ? "首页显示中（单独保存）"
+                    : "未启用（单独保存）"
+              }
+              title="公告"
+            >
+              {announcementLoading ? (
+                <div className="flex justify-center py-4">
+                  <Spinner size="sm" />
                 </div>
+              ) : (
+                <>
+                  <Field inline help="启用后在首页顶部显示" label="显示公告">
+                    <Switch
+                      aria-label="显示公告"
+                      isSelected={announcement.enabled === 1}
+                      size="sm"
+                      onValueChange={(checked) =>
+                        setAnnouncement({
+                          ...announcement,
+                          enabled: checked ? 1 : 0,
+                        })
+                      }
+                    />
+                  </Field>
+
+                  <Field
+                    help="支持 Markdown，链接在新标签页打开"
+                    label="公告内容"
+                  >
+                    <Textarea
+                      aria-label="公告内容"
+                      minRows={4}
+                      placeholder="例如：**加粗**、[链接](https://example.com)、- 列表"
+                      value={announcement.content}
+                      variant="bordered"
+                      onChange={(e) =>
+                        setAnnouncement({
+                          ...announcement,
+                          content: e.target.value,
+                        })
+                      }
+                    />
+                  </Field>
+
+                  <div className="flex items-center justify-between gap-3 border-t border-divider pt-3">
+                    <span className="text-xs text-default-500">
+                      公告单独保存，不随下方“保存”提交
+                    </span>
+                    <Button
+                      className="shrink-0"
+                      color="primary"
+                      isLoading={announcementSaving}
+                      size="sm"
+                      onPress={saveAnnouncement}
+                    >
+                      保存公告
+                    </Button>
+                  </div>
+                </>
+              )}
+            </ConfigSection>
+
+            <ConfigSection
+              {...sectionProps("backup")}
+              summary={
+                importing
+                  ? "正在导入..."
+                  : exporting
+                    ? "正在导出..."
+                    : "导出或导入 JSON 备份"
+              }
+              title="备份与恢复"
+            >
+              <Field
+                inline
+                help={`选择数据类型，导出为 JSON 文件；已选 ${exportTypes.length} / ${BACKUP_TYPE_VALUES.length}`}
+                label="导出数据"
+              >
+                <Button
+                  isLoading={exporting}
+                  size="sm"
+                  variant="flat"
+                  onPress={() => setExportSelectorOpen(true)}
+                >
+                  {exporting ? "导出中..." : "选择并导出"}
+                </Button>
+              </Field>
+
+              <input
+                ref={backupFileInputRef}
+                accept=".json"
+                className="hidden"
+                type="file"
+                onChange={handleFileChange}
+              />
+              <Field
+                inline
+                help={
+                  importFileName
+                    ? `已选择：${importFileName}`
+                    : `从备份文件恢复所选类型；已选 ${importTypes.length} / ${BACKUP_TYPE_VALUES.length}`
+                }
+                label="导入数据"
+              >
+                <Button
+                  isLoading={importing}
+                  size="sm"
+                  variant="flat"
+                  onPress={() => setImportSelectorOpen(true)}
+                >
+                  {importing ? "导入中..." : "选择并导入"}
+                </Button>
+              </Field>
+
+              <GistBackup />
+            </ConfigSection>
+
+            <ConfigSection
+              {...sectionProps("system")}
+              summary={systemSummary}
+              title="系统与升级"
+            >
+              <Field
+                inline
+                help="后端数据库占用空间，仅供参考"
+                label="数据库占用"
+              >
+                <span className="text-sm font-medium">{storageSummary}</span>
+              </Field>
+
+              <SubHeading>面板自升级</SubHeading>
+              {systemUpgradeLoading ? (
+                <div className="flex items-center gap-2 text-sm text-default-500">
+                  <Spinner size="sm" />
+                  正在加载升级状态...
+                </div>
+              ) : (
+                <>
+                  <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1.5 text-sm">
+                    <dt className="text-default-500">当前版本</dt>
+                    <dd>
+                      {systemUpgradeInfo?.currentVersion || "未获取到版本信息"}
+                    </dd>
+                    <dt className="text-default-500">最新版本</dt>
+                    <dd>
+                      {systemUpgradeInfo?.latestVersion || "未获取到可用版本"}
+                      {!systemUpgradeInfo?.latestVersion &&
+                        systemUpgradeInfo?.reason && (
+                          <p className="break-all text-xs text-default-500">
+                            {systemUpgradeInfo.reason}
+                          </p>
+                        )}
+                    </dd>
+                    <dt className="text-default-500">升级能力</dt>
+                    <dd>
+                      {systemUpgradeInfo?.capability.capable
+                        ? "可升级"
+                        : "当前不可升级"}
+                    </dd>
+                    <dt className="text-default-500">部署目录</dt>
+                    <dd className="break-all">
+                      {systemUpgradeInfo?.capability.deployDir ||
+                        "未获取到部署目录"}
+                    </dd>
+                    <dt className="text-default-500">后端容器</dt>
+                    <dd className="break-all">
+                      {systemUpgradeInfo?.capability.backendContainer ||
+                        "未获取到容器信息"}
+                    </dd>
+                  </dl>
+
+                  {!systemUpgradeInfo?.capability.capable && (
+                    <div className="rounded-lg border border-warning-200 bg-warning-50 px-3 py-2 text-warning-800 dark:border-warning-900/40 dark:bg-warning-950/30 dark:text-warning-200">
+                      <p className="text-xs font-medium">当前无法升级</p>
+                      <ul className="mt-1 list-disc space-y-1 pl-4 text-xs">
+                        {(systemUpgradeInfo?.capability.reasons?.length
+                          ? systemUpgradeInfo.capability.reasons
+                          : ["暂未获取到不可升级原因"]
+                        ).map((reason) => (
+                          <li key={reason}>{reason}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  <Field help="留空则升级到当前通道的最新版本" label="目标版本">
+                    <Select
+                      aria-label="目标版本"
+                      isDisabled={
+                        !systemUpgradeReleasesMatchChannel ||
+                        systemUpgradeReleases.length === 0 ||
+                        systemUpgradeExecuting
+                      }
+                      placeholder={
+                        systemUpgradeReleasesMatchChannel &&
+                        systemUpgradeReleases.length > 0
+                          ? "留空时自动选择最新版本"
+                          : "请先检查当前通道更新"
+                      }
+                      selectedKeys={
+                        systemUpgradeSelectedVersion
+                          ? [systemUpgradeSelectedVersion]
+                          : []
+                      }
+                      size="sm"
+                      variant="bordered"
+                      onSelectionChange={(keys) => {
+                        const selected = Array.from(keys)[0] as
+                          | string
+                          | undefined;
+
+                        setSystemUpgradeSelectedVersion(selected || "");
+                      }}
+                    >
+                      {(systemUpgradeReleasesMatchChannel
+                        ? systemUpgradeReleases
+                        : []
+                      ).map((release) => (
+                        <SelectItem
+                          key={release.version}
+                          description={release.publishedAt || "暂无发布时间"}
+                        >
+                          {release.name || release.version}
+                        </SelectItem>
+                      ))}
+                    </Select>
+                  </Field>
+                </>
               )}
 
-              <Field help="留空则升级到当前通道的最新版本" label="目标版本">
-                <Select
-                  aria-label="目标版本"
-                  isDisabled={
-                    !systemUpgradeReleasesMatchChannel ||
-                    systemUpgradeReleases.length === 0 ||
-                    systemUpgradeExecuting
-                  }
-                  placeholder={
-                    systemUpgradeReleasesMatchChannel &&
-                    systemUpgradeReleases.length > 0
-                      ? "留空时自动选择最新版本"
-                      : "请先检查当前通道更新"
-                  }
-                  selectedKeys={
-                    systemUpgradeSelectedVersion
-                      ? [systemUpgradeSelectedVersion]
-                      : []
-                  }
+              <div className="flex justify-end gap-2 border-t border-divider pt-3">
+                <Button
+                  isLoading={systemUpgradeChecking}
                   size="sm"
-                  variant="bordered"
-                  onSelectionChange={(keys) => {
-                    const selected = Array.from(keys)[0] as string | undefined;
-
-                    setSystemUpgradeSelectedVersion(selected || "");
-                  }}
+                  variant="flat"
+                  onPress={handleCheckSystemUpgrade}
                 >
-                  {(systemUpgradeReleasesMatchChannel
-                    ? systemUpgradeReleases
-                    : []
-                  ).map((release) => (
-                    <SelectItem
-                      key={release.version}
-                      description={release.publishedAt || "暂无发布时间"}
-                    >
-                      {release.name || release.version}
-                    </SelectItem>
-                  ))}
-                </Select>
-              </Field>
-            </>
-          )}
-
-          <div className="flex justify-end gap-2 border-t border-divider pt-3">
-            <Button
-              isLoading={systemUpgradeChecking}
-              size="sm"
-              variant="flat"
-              onPress={handleCheckSystemUpgrade}
-            >
-              检查更新
-            </Button>
-            <Button
-              color="primary"
-              isDisabled={!canTriggerSystemUpgrade}
-              isLoading={systemUpgradeExecuting}
-              size="sm"
-              onPress={handleOpenSystemUpgradeModal}
-            >
-              立即升级
-            </Button>
+                  检查更新
+                </Button>
+                <Button
+                  color="primary"
+                  isDisabled={!canTriggerSystemUpgrade}
+                  isLoading={systemUpgradeExecuting}
+                  size="sm"
+                  onPress={handleOpenSystemUpgradeModal}
+                >
+                  立即升级
+                </Button>
+              </div>
+            </ConfigSection>
           </div>
-        </ConfigSection>
-      </div>
+        </div>
+      </ConfigLayoutContext.Provider>
 
       {/* 配置统一保存（公告除外），有修改时出现 */}
       {hasChanges && (
