@@ -32,8 +32,7 @@ export function ActionSheet({
   actions: SheetAction[];
   onClose: () => void;
 }) {
-  // One action per row; destructive ones go last so they are not hit by
-  // accident.
+  // Destructive actions go last so they are not hit by accident.
   const ordered = [
     ...actions.filter((a) => a.color !== "danger"),
     ...actions.filter((a) => a.color === "danger"),
@@ -56,13 +55,18 @@ export function ActionSheet({
             </div>
           )}
         </ModalHeader>
-        <ModalBody className="pb-2">
+        <ModalBody className="pb-0">
           {children}
-          <div className="-mx-1 divide-y divide-divider border-t border-divider">
+          <div
+            className={`grid gap-2 border-t border-divider pt-4 ${
+              // Four or fewer fit on one row even on a phone.
+              ordered.length <= 4 ? "grid-cols-4" : "grid-cols-3 sm:grid-cols-4"
+            }`}
+          >
             {ordered.map((a) => (
               <button
                 key={a.key}
-                className={`flex h-11 w-full items-center px-1 text-left text-sm transition-colors hover:bg-default-50 disabled:pointer-events-none disabled:opacity-40 ${
+                className={`h-9 min-w-0 whitespace-nowrap rounded-md border border-divider px-1 text-sm transition-colors hover:border-default-400 hover:bg-default-50 disabled:pointer-events-none disabled:opacity-40 ${
                   a.color === "danger" ? "text-danger" : "text-foreground"
                 }`}
                 disabled={a.disabled}
