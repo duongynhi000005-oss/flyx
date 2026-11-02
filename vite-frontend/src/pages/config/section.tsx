@@ -79,15 +79,20 @@ export function ConfigSection({
           返回
         </button>
       )}
-      <div className="border-b border-divider pb-3">
-        <h2 className="flex items-baseline gap-2 text-base font-semibold">
-          {title}
-          {unsaved}
-        </h2>
-        {summary && (
-          <p className="mt-0.5 text-xs text-default-400">{summary}</p>
-        )}
-      </div>
+      {mode === "stack" ? (
+        <div className="border-b border-divider pb-3">
+          <h2 className="flex items-baseline gap-2 text-base font-semibold">
+            {title}
+            {unsaved}
+          </h2>
+          {summary && (
+            <p className="mt-0.5 text-xs text-default-400">{summary}</p>
+          )}
+        </div>
+      ) : (
+        // The tab names the group; only its current values go on top.
+        summary && <p className="text-xs text-default-400">{summary}</p>
+      )}
       <div className="space-y-4 pt-5">{children}</div>
     </section>
   );
