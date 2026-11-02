@@ -30,9 +30,8 @@ export function DeleteForwardModal({
 }: DeleteForwardModalProps) {
   return (
     <Modal
-      backdrop="blur"
       classNames={{
-        base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full rounded-2xl overflow-hidden",
+        base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full overflow-hidden",
       }}
       isOpen={deleteModalOpen}
       placement="center"
@@ -95,9 +94,8 @@ export function ResetFlowModal({
 }: ResetFlowModalProps) {
   return (
     <Modal
-      backdrop="blur"
       classNames={{
-        base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full rounded-2xl overflow-hidden",
+        base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full overflow-hidden",
       }}
       isOpen={resetFlowModalOpen}
       placement="center"
@@ -167,7 +165,7 @@ export function AddressListModal({
   return (
     <Modal
       classNames={{
-        base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full rounded-2xl overflow-hidden",
+        base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full overflow-hidden",
       }}
       isOpen={addressModalOpen}
       scrollBehavior="inside"
@@ -183,11 +181,11 @@ export function AddressListModal({
             </Button>
           </div>
 
-          <div className="space-y-2 max-h-60 overflow-y-auto scrollbar-hide">
+          <div className="max-h-60 divide-y divide-divider overflow-y-auto scrollbar-hide border-y border-divider">
             {addressList.map((item) => (
               <div
                 key={item.id}
-                className="flex justify-between items-center p-3 border border-default-200 dark:border-default-100 rounded-lg"
+                className="flex justify-between items-center py-2"
               >
                 <code className="font-mono text-sm flex-1 mr-3 text-foreground">
                   {item.address}
@@ -228,7 +226,7 @@ export function BatchDeleteModal({
   return (
     <Modal
       classNames={{
-        base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full rounded-2xl overflow-hidden",
+        base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full overflow-hidden",
       }}
       isOpen={batchDeleteModalOpen}
       onOpenChange={setBatchDeleteModalOpen}
@@ -286,7 +284,7 @@ export function BatchChangeTunnelModal({
   return (
     <Modal
       classNames={{
-        base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full rounded-2xl overflow-hidden",
+        base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full overflow-hidden",
       }}
       isOpen={batchChangeTunnelModalOpen}
       onOpenChange={setBatchChangeTunnelModalOpen}

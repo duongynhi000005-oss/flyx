@@ -3151,7 +3151,7 @@ export default function ForwardPage({
                 {rows.map(([k, v]) => (
                   <div key={k} className="flex justify-between gap-3">
                     <span className="shrink-0 text-default-500">{k}</span>
-                    <span className="min-w-0 whitespace-pre-line break-all text-right font-mono text-xs leading-5">
+                    <span className="min-w-0 whitespace-pre-line break-all text-right tabular-nums text-xs leading-5">
                       {v}
                     </span>
                   </div>

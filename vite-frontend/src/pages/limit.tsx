@@ -303,7 +303,7 @@ export default function LimitPage({
           <div className="space-y-2 text-sm">
             <div className="flex justify-between gap-3">
               <span className="shrink-0 text-default-500">速度限制</span>
-              <span className="font-mono text-xs leading-5">
+              <span className="tabular-nums text-xs leading-5">
                 {sheetRule.speed} Mbps
               </span>
             </div>
@@ -313,9 +313,8 @@ export default function LimitPage({
 
       {/* 新增/编辑模态框 */}
       <Modal
-        backdrop="blur"
         classNames={{
-          base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full rounded-2xl overflow-hidden",
+          base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full overflow-hidden",
         }}
         isOpen={modalOpen}
         placement="center"
@@ -391,9 +390,8 @@ export default function LimitPage({
 
       {/* 删除确认模态框 */}
       <Modal
-        backdrop="blur"
         classNames={{
-          base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full rounded-2xl overflow-hidden",
+          base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full overflow-hidden",
         }}
         isOpen={deleteModalOpen}
         placement="center"

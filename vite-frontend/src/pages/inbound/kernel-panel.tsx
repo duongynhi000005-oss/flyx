@@ -34,8 +34,7 @@ import {
 } from "@/shadcn-bridge/heroui/modal";
 import { Select, SelectItem } from "@/shadcn-bridge/heroui/select";
 
-const modalBase =
-  "!w-[calc(100%-32px)] !mx-auto sm:!w-full rounded-2xl overflow-hidden";
+const modalBase = "!w-[calc(100%-32px)] !mx-auto sm:!w-full overflow-hidden";
 
 export interface InstallRequest {
   nodeId: number;
@@ -299,7 +298,7 @@ export function KernelPanel({
       </div>
 
       {kernels.length === 0 ? (
-        <Card className="shadow-sm bg-default-50/50">
+        <Card className="shadow-none">
           <CardBody className="text-center py-10 text-sm text-default-500">
             还没有在任何服务器上安装内核。点击“安装内核”，先在服务器上安装
             Xray，再到“节点”里创建入站。
@@ -311,7 +310,7 @@ export function KernelPanel({
             const online = g.items[0]?.nodeOnline;
 
             return (
-              <Card key={g.key} className="shadow-sm overflow-hidden">
+              <Card key={g.key} className="shadow-none overflow-hidden">
                 <div className="flex items-center gap-2 pb-0 pl-3 pr-1.5 pt-2">
                   <span
                     className={`h-2 w-2 shrink-0 rounded-full ${
@@ -433,7 +432,6 @@ export function KernelPanel({
       </ActionSheet>
 
       <Modal
-        backdrop="blur"
         classNames={{ base: modalBase }}
         isOpen={installOpen}
         placement="center"
@@ -625,7 +623,6 @@ export function KernelPanel({
       </Modal>
 
       <Modal
-        backdrop="blur"
         classNames={{ base: modalBase }}
         isOpen={Boolean(logsFor)}
         placement="center"
@@ -651,7 +648,7 @@ export function KernelPanel({
                 )}
               </ModalHeader>
               <ModalBody>
-                <pre className="text-xs whitespace-pre-wrap break-all bg-default-100 rounded-xl p-3 max-h-[60vh] overflow-auto">
+                <pre className="text-xs whitespace-pre-wrap break-all bg-default-50 rounded-md p-3 max-h-[60vh] overflow-auto">
                   {logsLoading
                     ? "加载中..."
                     : (logs?.logs ?? []).join("\n") || "暂无日志"}
@@ -671,7 +668,6 @@ export function KernelPanel({
       </Modal>
 
       <Modal
-        backdrop="blur"
         classNames={{ base: modalBase }}
         isOpen={Boolean(removeTarget)}
         placement="center"

@@ -872,9 +872,8 @@ export default function GroupPage({
           </ActionSheet>
 
           <Modal
-            backdrop="blur"
             classNames={{
-              base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full rounded-2xl overflow-hidden",
+              base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full overflow-hidden",
             }}
             isOpen={tunnelGroupModalOpen}
             onOpenChange={onTunnelGroupModalChange}
@@ -920,9 +919,8 @@ export default function GroupPage({
           </Modal>
 
           <Modal
-            backdrop="blur"
             classNames={{
-              base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full rounded-2xl overflow-hidden",
+              base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full overflow-hidden",
             }}
             isOpen={userGroupModalOpen}
             onOpenChange={onUserGroupModalChange}
@@ -968,9 +966,8 @@ export default function GroupPage({
           </Modal>
 
           <Modal
-            backdrop="blur"
             classNames={{
-              base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full rounded-2xl overflow-hidden",
+              base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full overflow-hidden",
             }}
             isOpen={tunnelAssignModalOpen}
             onOpenChange={onTunnelAssignModalChange}
@@ -1019,9 +1016,8 @@ export default function GroupPage({
           </Modal>
 
           <Modal
-            backdrop="blur"
             classNames={{
-              base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full rounded-2xl overflow-hidden",
+              base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full overflow-hidden",
             }}
             isOpen={userAssignModalOpen}
             onOpenChange={onUserAssignModalChange}

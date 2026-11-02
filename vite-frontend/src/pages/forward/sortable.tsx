@@ -26,13 +26,16 @@ export const DragHandle = ({
   attributes,
   listeners,
   title,
+  reveal = "sm:opacity-0 sm:group-hover:opacity-100",
 }: {
   attributes?: DraggableAttributes;
   listeners?: DraggableSyntheticListeners;
   title: string;
+  /** Classes that hide the handle until its row (or header) is hovered. */
+  reveal?: string;
 }) => (
   <span
-    className="inline-flex cursor-grab touch-none p-1 text-default-300 hover:text-default-500 active:cursor-grabbing"
+    className={`inline-flex cursor-grab touch-none p-1 text-default-300 transition-opacity hover:text-default-500 active:cursor-grabbing ${reveal}`}
     title={title}
     {...attributes}
     {...listeners}
@@ -106,7 +109,7 @@ export const SortableTunnelGroup = ({
         >
           <ListGroup
             title={
-              <span className="flex min-w-0 flex-1 items-center gap-2">
+              <span className="group/head flex min-w-0 flex-1 items-center gap-2">
                 <button
                   aria-expanded={!collapsed}
                   className="flex min-w-0 items-center gap-1 text-left"
@@ -133,6 +136,7 @@ export const SortableTunnelGroup = ({
                   <DragHandle
                     attributes={attributes}
                     listeners={listeners}
+                    reveal="sm:opacity-0 sm:group-hover/head:opacity-100"
                     title="拖动分组排序"
                   />
                 </span>

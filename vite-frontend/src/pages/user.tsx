@@ -62,7 +62,6 @@ import {
   assignMonitorPermission,
   removeMonitorPermission,
 } from "@/api";
-import { DeleteIcon } from "@/components/icons";
 import { PageLoadingState } from "@/components/page-state";
 import {
   markPageCached,
@@ -1347,7 +1346,7 @@ export default function UserPage({ embedded = false }: { embedded?: boolean }) {
                 <div className="space-y-1">
                   <div className="flex justify-between gap-3">
                     <span className="shrink-0 text-default-500">流量</span>
-                    <span className="font-mono text-xs leading-5">
+                    <span className="tabular-nums text-xs leading-5">
                       {formatFlow(usedFlow)} /{" "}
                       {formatFlowLimit(user.flow, user.flowMiB)}
                     </span>
@@ -1370,7 +1369,7 @@ export default function UserPage({ embedded = false }: { embedded?: boolean }) {
                 {rows.map(([k, v]) => (
                   <div key={k} className="flex justify-between gap-3">
                     <span className="shrink-0 text-default-500">{k}</span>
-                    <span className="min-w-0 break-all text-right font-mono text-xs leading-5">
+                    <span className="min-w-0 break-all text-right tabular-nums text-xs leading-5">
                       {v}
                     </span>
                   </div>
@@ -1383,9 +1382,8 @@ export default function UserPage({ embedded = false }: { embedded?: boolean }) {
 
       {/* 用户表单模态框 */}
       <Modal
-        backdrop="blur"
         classNames={{
-          base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full rounded-2xl",
+          base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full",
         }}
         isOpen={isUserModalOpen}
         placement="center"
@@ -1514,7 +1512,7 @@ export default function UserPage({ embedded = false }: { embedded?: boolean }) {
               ((editingUser.dailyQuotaGB ?? 0) > 0 ||
                 (editingUser.monthlyQuotaGB ?? 0) > 0 ||
                 (editingUser.disabledByQuota ?? 0) > 0) && (
-                <div className="space-y-3 rounded-xl border border-default-200 bg-default-50/60 p-4">
+                <div className="space-y-3 border-y border-divider py-3">
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <h3 className="text-sm font-semibold text-foreground">
@@ -1642,7 +1640,6 @@ export default function UserPage({ embedded = false }: { embedded?: boolean }) {
 
       {/* 隧道权限管理模态框 */}
       <Modal
-        backdrop="blur"
         classNames={{
           base: "max-w-[95vw] sm:max-w-4xl",
         }}
@@ -1661,8 +1658,8 @@ export default function UserPage({ embedded = false }: { embedded?: boolean }) {
             <div className="space-y-6">
               {/* 监控权限部分 */}
               <div>
-                <h3 className="text-lg font-semibold mb-4">监控权限</h3>
-                <div className="flex items-center justify-between gap-4 bg-default-100 dark:bg-default-50 p-4 rounded-lg border border-default-200 dark:border-default-100/30">
+                <h3 className="text-sm font-semibold mb-2">监控权限</h3>
+                <div className="flex items-center justify-between gap-4 border-y border-divider py-3">
                   <div className="min-w-0">
                     <div className="text-sm font-medium text-foreground">
                       允许访问监控功能
@@ -1695,9 +1692,9 @@ export default function UserPage({ embedded = false }: { embedded?: boolean }) {
 
               {/* 分配新权限部分 */}
               <div>
-                <h3 className="text-lg font-semibold mb-4">分配新权限</h3>
+                <h3 className="text-sm font-semibold mb-2">分配新权限</h3>
                 <div className="space-y-4">
-                  <div className="text-sm text-default-500 bg-default-100 dark:bg-default-50 p-3 rounded-lg border border-default-200 dark:border-default-100/30">
+                  <div className="text-xs text-default-500">
                     流量限制、规则数量、到期时间、流量重置时间将自动继承用户设置
                   </div>
 
@@ -1714,13 +1711,13 @@ export default function UserPage({ embedded = false }: { embedded?: boolean }) {
                           key={tunnel.id}
                           aria-disabled={isAssigned}
                           className={`
-                            px-4 py-3 rounded-lg border transition-all duration-200 cursor-pointer
+                            px-3 py-2.5 rounded-md border transition-colors cursor-pointer
                             ${
                               isAssigned
-                                ? "bg-default-100/50 dark:bg-default-50/50 border-default-200/50 dark:border-default-100/20 opacity-60 cursor-not-allowed"
+                                ? "border-divider opacity-50 cursor-not-allowed"
                                 : isSelected
-                                  ? "bg-primary-50 dark:bg-primary-900/20 border-primary-300 dark:border-primary-500/50 shadow-sm"
-                                  : "bg-white dark:bg-default-50 border-default-200 dark:border-default-100/30 hover:border-primary-200 dark:hover:border-primary-500/30 hover:shadow-sm"
+                                  ? "border-foreground"
+                                  : "border-divider hover:border-default-400"
                             }
                           `}
                           role="button"
@@ -1818,7 +1815,7 @@ export default function UserPage({ embedded = false }: { embedded?: boolean }) {
                       );
                     })}
                     {tunnels.length === 0 && (
-                      <div className="p-8 text-center text-default-400 bg-default-50 dark:bg-default-100/50 rounded-lg border border-dashed border-default-200 dark:border-default-100/30">
+                      <div className="py-8 text-center text-sm text-default-400">
                         暂无可用隧道
                       </div>
                     )}
@@ -1857,7 +1854,7 @@ export default function UserPage({ embedded = false }: { embedded?: boolean }) {
                     {userTunnels.map((userTunnel) => (
                       <div
                         key={userTunnel.id}
-                        className="rounded-xl border border-divider bg-content1 px-3 py-2.5"
+                        className="border-b border-divider py-2.5 last:border-b-0"
                       >
                         <div className="flex items-center gap-2">
                           <span
@@ -1940,9 +1937,8 @@ export default function UserPage({ embedded = false }: { embedded?: boolean }) {
 
       {/* 编辑隧道权限模态框 */}
       <Modal
-        backdrop="blur"
         classNames={{
-          base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full rounded-2xl",
+          base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full",
         }}
         isDismissable={false}
         isOpen={isEditTunnelModalOpen}
@@ -2116,9 +2112,8 @@ export default function UserPage({ embedded = false }: { embedded?: boolean }) {
 
       {/* 删除确认对话框 */}
       <Modal
-        backdrop="blur"
         classNames={{
-          base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full rounded-2xl",
+          base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full",
         }}
         isOpen={isDeleteModalOpen}
         placement="center"
@@ -2132,9 +2127,6 @@ export default function UserPage({ embedded = false }: { embedded?: boolean }) {
           </ModalHeader>
           <ModalBody>
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-danger-100 rounded-full flex items-center justify-center">
-                <DeleteIcon className="w-6 h-6 text-danger" />
-              </div>
               <div className="flex-1">
                 <p className="text-foreground">
                   确定要删除用户{" "}
@@ -2162,9 +2154,8 @@ export default function UserPage({ embedded = false }: { embedded?: boolean }) {
 
       {/* 删除隧道权限确认对话框 */}
       <Modal
-        backdrop="blur"
         classNames={{
-          base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full rounded-2xl",
+          base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full",
         }}
         isOpen={isDeleteTunnelModalOpen}
         placement="center"
@@ -2178,9 +2169,6 @@ export default function UserPage({ embedded = false }: { embedded?: boolean }) {
           </ModalHeader>
           <ModalBody>
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-danger-100 rounded-full flex items-center justify-center">
-                <DeleteIcon className="w-6 h-6 text-danger" />
-              </div>
               <div className="flex-1">
                 <p className="text-foreground">
                   确定要删除用户{" "}
@@ -2210,9 +2198,8 @@ export default function UserPage({ embedded = false }: { embedded?: boolean }) {
 
       {/* 重置流量确认对话框 */}
       <Modal
-        backdrop="blur"
         classNames={{
-          base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full rounded-2xl",
+          base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full",
         }}
         isOpen={isResetFlowModalOpen}
         placement="center"
@@ -2226,20 +2213,6 @@ export default function UserPage({ embedded = false }: { embedded?: boolean }) {
           </ModalHeader>
           <ModalBody>
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-warning-100 rounded-full flex items-center justify-center">
-                <svg
-                  aria-hidden="true"
-                  className="w-6 h-6 text-warning"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    clipRule="evenodd"
-                    d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
-                    fillRule="evenodd"
-                  />
-                </svg>
-              </div>
               <div className="flex-1">
                 <p className="text-foreground">
                   确定要重置用户{" "}
@@ -2251,14 +2224,12 @@ export default function UserPage({ embedded = false }: { embedded?: boolean }) {
                 <p className="text-small text-default-500 mt-1">
                   该操作只会重置账号流量不会重置隧道权限流量，重置后该用户的上下行流量将归零，此操作不可撤销。
                 </p>
-                <div className="mt-2 p-2 bg-warning-50 dark:bg-warning-100/10 rounded text-xs">
-                  <div className="text-warning-700 dark:text-warning-300">
-                    当前流量使用情况：
-                  </div>
+                <div className="mt-2 border-t border-divider pt-2 text-xs">
+                  <div className="text-default-500">当前流量使用情况：</div>
                   <div className="mt-1 space-y-1">
                     <div className="flex justify-between">
                       <span>上行流量：</span>
-                      <span className="font-mono">
+                      <span className="tabular-nums">
                         {userToReset
                           ? formatFlow(userToReset.inFlow || 0)
                           : "-"}
@@ -2266,7 +2237,7 @@ export default function UserPage({ embedded = false }: { embedded?: boolean }) {
                     </div>
                     <div className="flex justify-between">
                       <span>下行流量：</span>
-                      <span className="font-mono">
+                      <span className="tabular-nums">
                         {userToReset
                           ? formatFlow(userToReset.outFlow || 0)
                           : "-"}
@@ -2274,7 +2245,7 @@ export default function UserPage({ embedded = false }: { embedded?: boolean }) {
                     </div>
                     <div className="flex justify-between font-medium">
                       <span>总计：</span>
-                      <span className="font-mono text-warning-700 dark:text-warning-300">
+                      <span className="tabular-nums text-foreground">
                         {userToReset
                           ? formatFlow(calculateUserTotalUsedFlow(userToReset))
                           : "-"}
@@ -2302,9 +2273,8 @@ export default function UserPage({ embedded = false }: { embedded?: boolean }) {
 
       {/* 重置隧道流量确认对话框 */}
       <Modal
-        backdrop="blur"
         classNames={{
-          base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full rounded-2xl",
+          base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full",
         }}
         isOpen={isResetTunnelFlowModalOpen}
         placement="center"
@@ -2318,20 +2288,6 @@ export default function UserPage({ embedded = false }: { embedded?: boolean }) {
           </ModalHeader>
           <ModalBody>
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-warning-100 rounded-full flex items-center justify-center">
-                <svg
-                  aria-hidden="true"
-                  className="w-6 h-6 text-warning"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    clipRule="evenodd"
-                    d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
-                    fillRule="evenodd"
-                  />
-                </svg>
-              </div>
               <div className="flex-1">
                 <p className="text-foreground">
                   确定要重置用户{" "}
@@ -2345,14 +2301,12 @@ export default function UserPage({ embedded = false }: { embedded?: boolean }) {
                 <p className="text-small text-default-500 mt-1">
                   该操作只会重置隧道权限流量不会重置账号流量，重置后该隧道权限的上下行流量将归零，此操作不可撤销。
                 </p>
-                <div className="mt-2 p-2 bg-warning-50 dark:bg-warning-100/10 rounded text-xs">
-                  <div className="text-warning-700 dark:text-warning-300">
-                    当前流量使用情况：
-                  </div>
+                <div className="mt-2 border-t border-divider pt-2 text-xs">
+                  <div className="text-default-500">当前流量使用情况：</div>
                   <div className="mt-1 space-y-1">
                     <div className="flex justify-between">
                       <span>上行流量：</span>
-                      <span className="font-mono">
+                      <span className="tabular-nums">
                         {tunnelToReset
                           ? formatFlow(tunnelToReset.inFlow || 0)
                           : "-"}
@@ -2360,7 +2314,7 @@ export default function UserPage({ embedded = false }: { embedded?: boolean }) {
                     </div>
                     <div className="flex justify-between">
                       <span>下行流量：</span>
-                      <span className="font-mono">
+                      <span className="tabular-nums">
                         {tunnelToReset
                           ? formatFlow(tunnelToReset.outFlow || 0)
                           : "-"}
@@ -2368,7 +2322,7 @@ export default function UserPage({ embedded = false }: { embedded?: boolean }) {
                     </div>
                     <div className="flex justify-between font-medium">
                       <span>总计：</span>
-                      <span className="font-mono text-warning-700 dark:text-warning-300">
+                      <span className="tabular-nums text-foreground">
                         {tunnelToReset
                           ? formatFlow(calculateTunnelUsedFlow(tunnelToReset))
                           : "-"}

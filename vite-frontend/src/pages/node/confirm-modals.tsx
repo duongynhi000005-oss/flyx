@@ -29,9 +29,8 @@ export function RollbackNodeModal({
 }: RollbackNodeModalProps) {
   return (
     <Modal
-      backdrop="blur"
       classNames={{
-        base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full rounded-2xl overflow-hidden",
+        base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full overflow-hidden",
       }}
       isOpen={rollbackModalOpen}
       placement="center"
@@ -89,7 +88,7 @@ function UninstallAgentOption({
   onValueChange: (value: boolean) => void;
 }) {
   return (
-    <div className="space-y-1 rounded-xl border border-default-200 bg-default-100/60 px-3 py-2.5">
+    <div className="space-y-1 border-y border-divider py-2.5">
       <Checkbox isSelected={isSelected} size="sm" onValueChange={onValueChange}>
         同时卸载服务器上的 agent
       </Checkbox>
@@ -121,9 +120,8 @@ export function DeleteNodeModal({
 
   return (
     <Modal
-      backdrop="blur"
       classNames={{
-        base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full rounded-2xl overflow-hidden",
+        base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full overflow-hidden",
       }}
       isOpen={deleteModalOpen}
       placement="center"
@@ -189,9 +187,8 @@ export function BatchDeleteNodesModal({
 
   return (
     <Modal
-      backdrop="blur"
       classNames={{
-        base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full rounded-2xl overflow-hidden",
+        base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full overflow-hidden",
       }}
       isOpen={batchDeleteModalOpen}
       placement="center"

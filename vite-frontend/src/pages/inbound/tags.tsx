@@ -15,7 +15,7 @@ import {
 } from "@/shadcn-bridge/heroui/modal";
 
 const modalBase =
-  "!w-[calc(100%-32px)] !mx-auto sm:!w-full rounded-2xl overflow-hidden";
+  "!w-[calc(100%-32px)] !mx-auto sm:!w-full overflow-hidden";
 
 /** Offered before the user has tags of their own. */
 const PRESET_TAGS = ["出站", "落地", "中转", "备用"];
@@ -209,7 +209,6 @@ export function TagsModal({
 
   return (
     <Modal
-      backdrop="blur"
       classNames={{ base: modalBase }}
       isOpen={Boolean(target)}
       placement="center"

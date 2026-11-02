@@ -1592,7 +1592,7 @@ export default function TunnelPage({
                         right={
                           !isSearching && (
                             <span
-                              className="cursor-grab touch-none p-1 text-default-300 hover:text-default-500 active:cursor-grabbing"
+                              className="cursor-grab touch-none p-1 text-default-300 transition-opacity hover:text-default-500 active:cursor-grabbing sm:opacity-0 sm:group-hover:opacity-100"
                               title="拖动排序"
                               {...listeners}
                             >

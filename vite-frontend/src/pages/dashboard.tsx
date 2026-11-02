@@ -736,7 +736,6 @@ function UserDashboard() {
 
       {/* 地址列表弹窗 */}
       <Modal
-        backdrop="blur"
         isOpen={addressModalOpen}
         placement="center"
         scrollBehavior="inside"

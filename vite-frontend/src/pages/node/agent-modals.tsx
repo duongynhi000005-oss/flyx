@@ -65,7 +65,7 @@ export function InstallCommandModal({
           ? installCommands.dockerComposePrivileged
           : installCommands.dockerCompose;
   const privilegedControl = (
-    <div className="flex items-center justify-between gap-4 rounded-xl border border-default-200 bg-default-100/60 px-3 py-2.5">
+    <div className="flex items-center justify-between gap-4 border-y border-divider py-2.5">
       <div className="min-w-0">
         <p className="text-sm font-medium">服务器调优（--privileged）</p>
         <p className="text-xs text-default-500">
@@ -106,9 +106,8 @@ export function InstallCommandModal({
 
   return (
     <Modal
-      backdrop="blur"
       classNames={{
-        base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full rounded-2xl overflow-hidden",
+        base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full overflow-hidden",
       }}
       isOpen={installCommandModal}
       placement="center"
@@ -236,9 +235,8 @@ export function UpgradeNodeModal({
 }: UpgradeNodeModalProps) {
   return (
     <Modal
-      backdrop="blur"
       classNames={{
-        base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full rounded-2xl overflow-hidden",
+        base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full overflow-hidden",
       }}
       isOpen={upgradeModalOpen}
       placement="center"

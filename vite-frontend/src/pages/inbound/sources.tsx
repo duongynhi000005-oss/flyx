@@ -26,7 +26,7 @@ import {
 import { formatTraffic } from "@/utils/traffic";
 
 const modalBase =
-  "!w-[calc(100%-32px)] !mx-auto sm:!w-full rounded-2xl overflow-hidden";
+  "!w-[calc(100%-32px)] !mx-auto sm:!w-full overflow-hidden";
 
 export const INTERVALS: Array<[string, string]> = [
   ["0", "手动"],
@@ -388,7 +388,6 @@ export function RemoteSourcesSection({
       />
 
       <Modal
-        backdrop="blur"
         classNames={{ base: modalBase }}
         isOpen={Boolean(draft)}
         placement="center"

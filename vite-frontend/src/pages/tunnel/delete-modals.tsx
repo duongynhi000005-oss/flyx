@@ -59,9 +59,8 @@ export function DeleteTunnelModal({
 }: DeleteTunnelModalProps) {
   return (
     <Modal
-      backdrop="blur"
       classNames={{
-        base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full rounded-2xl overflow-hidden",
+        base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full overflow-hidden",
       }}
       isOpen={deleteModalOpen}
       placement="center"
@@ -82,7 +81,7 @@ export function DeleteTunnelModal({
             </ModalHeader>
             <ModalBody className="space-y-3 sm:space-y-4">
               {deletePreviewLoading ? (
-                <div className="flex items-center gap-3 rounded-xl border border-divider bg-content2/40 px-3 py-5 text-sm text-default-600 sm:px-4 sm:py-6">
+                <div className="flex items-center gap-3 py-5 text-sm text-default-600">
                   <Spinner size="sm" />
                   正在检查是否有规则正在使用该隧道...
                 </div>
@@ -96,7 +95,7 @@ export function DeleteTunnelModal({
                   />
 
                   {(tunnelDeletePreview?.sampleForwards?.length ?? 0) > 0 ? (
-                    <div className="space-y-3 rounded-xl border border-divider bg-content2/40 p-3 sm:p-4">
+                    <div className="space-y-2">
                       <div className="flex items-center justify-between gap-3">
                         <h3 className="text-sm font-semibold text-foreground">
                           关联规则预览
@@ -106,17 +105,14 @@ export function DeleteTunnelModal({
                           条
                         </span>
                       </div>
-                      <div className="space-y-2">
+                      <div className="divide-y divide-divider border-y border-divider">
                         {tunnelDeletePreview?.sampleForwards?.map((forward) => (
-                          <div
-                            key={forward.id}
-                            className="rounded-lg border border-divider/70 bg-background/80 px-2.5 py-2 sm:px-3"
-                          >
+                          <div key={forward.id} className="py-2">
                             <div className="flex items-center justify-between gap-3">
                               <span className="truncate text-sm font-medium text-foreground">
                                 {forward.name}
                               </span>
-                              <span className="shrink-0 font-mono text-xs text-default-500">
+                              <span className="shrink-0 tabular-nums text-xs text-default-500">
                                 :{forward.inPort || 0}
                               </span>
                             </div>
@@ -284,9 +280,8 @@ export function BatchDeleteTunnelsModal({
 }: BatchDeleteTunnelsModalProps) {
   return (
     <Modal
-      backdrop="blur"
       classNames={{
-        base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full rounded-2xl overflow-hidden",
+        base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full overflow-hidden",
       }}
       isOpen={batchDeleteModalOpen}
       onOpenChange={handleBatchDeleteModalOpenChange}
@@ -303,7 +298,7 @@ export function BatchDeleteTunnelsModal({
             </ModalHeader>
             <ModalBody className="space-y-3 sm:space-y-4">
               {batchDeletePreviewLoading ? (
-                <div className="flex items-center gap-3 rounded-xl border border-divider bg-content2/40 px-3 py-5 text-sm text-default-600 sm:px-4 sm:py-6">
+                <div className="flex items-center gap-3 py-5 text-sm text-default-600">
                   <Spinner size="sm" />
                   正在检查选中隧道是否有关联规则...
                 </div>
@@ -316,12 +311,9 @@ export function BatchDeleteTunnelsModal({
                     variant="flat"
                   />
 
-                  <div className="max-h-64 space-y-3 overflow-y-auto scrollbar-hide rounded-xl border border-divider bg-content2/40 p-3 sm:max-h-72 sm:p-4">
+                  <div className="max-h-64 divide-y divide-divider overflow-y-auto scrollbar-hide border-y border-divider sm:max-h-72">
                     {batchDeleteDependentItems.map((item) => (
-                      <div
-                        key={item.tunnelId}
-                        className="rounded-lg border border-divider/70 bg-background/80 p-2.5 sm:p-3"
-                      >
+                      <div key={item.tunnelId} className="py-2.5">
                         <div className="flex items-center justify-between gap-3">
                           <div className="min-w-0">
                             <p className="truncate text-sm font-medium text-foreground">
@@ -347,7 +339,7 @@ export function BatchDeleteTunnelsModal({
                                   <span className="truncate text-xs font-medium text-foreground">
                                     {forward.name}
                                   </span>
-                                  <span className="shrink-0 font-mono text-[11px] text-default-500">
+                                  <span className="shrink-0 tabular-nums text-[11px] text-default-500">
                                     :{forward.inPort || 0}
                                   </span>
                                 </div>

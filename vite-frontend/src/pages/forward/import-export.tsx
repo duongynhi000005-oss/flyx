@@ -40,9 +40,8 @@ export function ExportModal({
 }: ExportModalProps) {
   return (
     <Modal
-      backdrop="blur"
       classNames={{
-        base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full rounded-2xl overflow-hidden",
+        base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full overflow-hidden",
       }}
       isOpen={exportModalOpen}
       placement="center"
@@ -242,9 +241,8 @@ export function ImportModal({
 }: ImportModalProps) {
   return (
     <Modal
-      backdrop="blur"
       classNames={{
-        base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full rounded-2xl overflow-hidden",
+        base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full overflow-hidden",
       }}
       isOpen={importModalOpen}
       placement="center"
@@ -359,21 +357,14 @@ export function ImportModal({
                 </div>
 
                 <div
-                  className="max-h-40 overflow-y-auto space-y-1 scrollbar-hide"
+                  className="max-h-40 divide-y divide-divider overflow-y-auto scrollbar-hide border-y border-divider"
                   style={{
                     scrollbarWidth: "thin",
                     scrollbarColor: "rgb(156 163 175) transparent",
                   }}
                 >
                   {importResults.map((result, index) => (
-                    <div
-                      key={index}
-                      className={`p-2 rounded border ${
-                        result.success
-                          ? "bg-success-50 dark:bg-success-100/10 border-success-200 dark:border-success-300/20"
-                          : "bg-danger-50 dark:bg-danger-100/10 border-danger-200 dark:border-danger-300/20"
-                      }`}
-                    >
+                    <div key={index} className="py-2">
                       <div className="flex items-center gap-2">
                         {result.success ? (
                           <svg

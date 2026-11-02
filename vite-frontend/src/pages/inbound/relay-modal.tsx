@@ -29,7 +29,7 @@ import {
 import { Select, SelectItem } from "@/shadcn-bridge/heroui/select";
 
 const modalBase =
-  "!w-[calc(100%-32px)] !mx-auto sm:!w-full rounded-2xl overflow-hidden";
+  "!w-[calc(100%-32px)] !mx-auto sm:!w-full overflow-hidden";
 
 function isLoopback(listen: string) {
   return listen === "::1" || listen.startsWith("127.");
@@ -248,7 +248,6 @@ export function RelayModal({
   return (
     <>
       <Modal
-        backdrop="blur"
         classNames={{ base: modalBase }}
         isOpen={Boolean(item)}
         placement="center"
@@ -498,7 +497,6 @@ export function RelayModal({
       </Modal>
 
       <Modal
-        backdrop="blur"
         classNames={{ base: modalBase }}
         isOpen={Boolean(removing)}
         placement="center"

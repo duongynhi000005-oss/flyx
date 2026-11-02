@@ -49,9 +49,8 @@ export function DiagnosisModal({
 }: DiagnosisModalProps) {
   return (
     <Modal
-      backdrop="blur"
       classNames={{
-        base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full rounded-2xl overflow-hidden [&>div]:bg-content1 [&>div]:dark:bg-content1",
+        base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full overflow-hidden",
       }}
       isOpen={diagnosisModalOpen}
       placement="center"
@@ -73,20 +72,15 @@ export function DiagnosisModal({
               closable
               className="flex flex-col gap-1 border-b border-divider"
             >
-              <h2 className="text-xl font-bold">规则诊断结果</h2>
+              <h2 className="text-base font-semibold">规则诊断结果</h2>
               {currentDiagnosisForward && (
                 <div className="flex items-center gap-2 min-w-0">
                   <span className="text-small text-default-500 truncate flex-1 min-w-0">
                     {currentDiagnosisForward.name}
                   </span>
-                  <Chip
-                    className="flex-shrink-0"
-                    color="primary"
-                    size="sm"
-                    variant="flat"
-                  >
+                  <span className="shrink-0 text-xs text-default-400">
                     规则服务
-                  </Chip>
+                  </span>
                 </div>
               )}
             </ModalHeader>
@@ -94,8 +88,8 @@ export function DiagnosisModal({
               {diagnosisResult ? (
                 <div className="space-y-4">
                   {diagnosisLoading && (
-                    <div className="flex items-center justify-between rounded-lg border border-primary/20 bg-primary/5 px-3 py-2">
-                      <div className="flex items-center gap-2 text-sm text-primary">
+                    <div className="flex items-center justify-between border-b border-divider pb-3">
+                      <div className="flex items-center gap-2 text-sm text-default-600">
                         <Spinner size="sm" />
                         <span>
                           正在诊断 {diagnosisProgress.completed}/
@@ -104,9 +98,9 @@ export function DiagnosisModal({
                             : "?"}
                         </span>
                       </div>
-                      <Chip color="primary" size="sm" variant="flat">
+                      <span className="text-xs text-default-400">
                         流式更新中
-                      </Chip>
+                      </span>
                     </div>
                   )}
 
@@ -120,9 +114,9 @@ export function DiagnosisModal({
                   )}
 
                   {/* 统计摘要 */}
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="text-center p-3 bg-default-100 rounded-lg border border-divider">
-                      <div className="text-2xl font-bold text-foreground">
+                  <div className="grid grid-cols-3 divide-x divide-divider border-y border-divider">
+                    <div className="py-3 text-center">
+                      <div className="text-2xl font-semibold tabular-nums text-foreground">
                         {diagnosisProgress.total > 0
                           ? diagnosisProgress.total
                           : diagnosisResult.results.length}
@@ -131,29 +125,25 @@ export function DiagnosisModal({
                         总测试数
                       </div>
                     </div>
-                    <div className="text-center p-3 bg-success-50 dark:bg-success-900/20 rounded-lg border border-success-200 dark:border-success-700">
-                      <div className="text-2xl font-bold text-success-600 dark:text-success-400">
+                    <div className="py-3 text-center">
+                      <div className="text-2xl font-semibold tabular-nums text-success">
                         {diagnosisProgress.completed > 0 ||
                         diagnosisProgress.total > 0
                           ? diagnosisProgress.success
                           : diagnosisResult.results.filter((r) => r.success)
                               .length}
                       </div>
-                      <div className="text-xs text-success-600 dark:text-success-400/80 mt-1">
-                        成功
-                      </div>
+                      <div className="text-xs text-default-500 mt-1">成功</div>
                     </div>
-                    <div className="text-center p-3 bg-danger-50 dark:bg-danger-900/20 rounded-lg border border-danger-200 dark:border-danger-700">
-                      <div className="text-2xl font-bold text-danger-600 dark:text-danger-400">
+                    <div className="py-3 text-center">
+                      <div className="text-2xl font-semibold tabular-nums text-danger">
                         {diagnosisProgress.completed > 0 ||
                         diagnosisProgress.total > 0
                           ? diagnosisProgress.failed
                           : diagnosisResult.results.filter((r) => !r.success)
                               .length}
                       </div>
-                      <div className="text-xs text-danger-600 dark:text-danger-400/80 mt-1">
-                        失败
-                      </div>
+                      <div className="text-xs text-default-500 mt-1">失败</div>
                     </div>
                   </div>
 
@@ -195,13 +185,13 @@ export function DiagnosisModal({
                             key={title}
                             className="border border-divider rounded-lg overflow-hidden"
                           >
-                            <div className="bg-primary/10 dark:bg-primary/20 px-3 py-2 border-b border-divider">
-                              <h3 className="text-sm font-semibold text-primary">
+                            <div className="px-3 py-2 border-b border-divider">
+                              <h3 className="text-sm font-semibold text-foreground">
                                 {title}
                               </h3>
                             </div>
                             <table className="w-full text-sm">
-                              <thead className="bg-default-100">
+                              <thead className="border-b border-divider text-default-500">
                                 <tr>
                                   <th className="px-3 py-2 text-left font-semibold text-xs">
                                     路径
@@ -220,7 +210,7 @@ export function DiagnosisModal({
                                   </th>
                                 </tr>
                               </thead>
-                              <tbody className="divide-y divide-divider bg-content1">
+                              <tbody className="divide-y divide-divider">
                                 {results.map((result, index) => {
                                   const isDiagnosing = Boolean(
                                     result.diagnosing,
@@ -235,13 +225,7 @@ export function DiagnosisModal({
                                   return (
                                     <tr
                                       key={index}
-                                      className={`hover:bg-default-50 dark:hover:bg-gray-700/50 ${
-                                        isDiagnosing
-                                          ? "bg-warning-50 dark:bg-warning-900/20"
-                                          : isSuccess
-                                            ? "bg-content1"
-                                            : "bg-danger-50 dark:bg-danger-900/30"
-                                      }`}
+                                      className="hover:bg-default-50"
                                     >
                                       <td className="px-3 py-2">
                                         <div className="flex items-center gap-2">
@@ -249,10 +233,10 @@ export function DiagnosisModal({
                                             <Spinner size="sm" />
                                           ) : (
                                             <span
-                                              className={`w-5 h-5 rounded-full flex items-center justify-center text-xs ${
+                                              className={`w-5 h-5 flex items-center justify-center text-sm ${
                                                 isSuccess
-                                                  ? "bg-success text-white"
-                                                  : "bg-danger text-white"
+                                                  ? "text-success"
+                                                  : "text-danger"
                                               }`}
                                             >
                                               {isSuccess ? "✓" : "✗"}
@@ -405,8 +389,8 @@ export function DiagnosisModal({
 
                         return (
                           <div key={title} className="space-y-2">
-                            <div className="px-2 py-1.5 bg-primary/10 dark:bg-primary/20 rounded-lg border border-primary/30">
-                              <h3 className="text-sm font-semibold text-primary">
+                            <div className="border-b border-divider pb-1.5">
+                              <h3 className="text-sm font-semibold text-foreground">
                                 {title}
                               </h3>
                             </div>
@@ -421,23 +405,17 @@ export function DiagnosisModal({
                               return (
                                 <div
                                   key={index}
-                                  className={`border rounded-lg p-3 ${
-                                    isDiagnosing
-                                      ? "border-warning-200 dark:border-warning-300/30 bg-warning-50 dark:bg-warning-900/20"
-                                      : isSuccess
-                                        ? "border-divider bg-content1"
-                                        : "border-danger-200 dark:border-danger-300/30 bg-danger-50 dark:bg-danger-900/30"
-                                  }`}
+                                  className="border-b border-divider py-3 last:border-b-0"
                                 >
                                   <div className="flex items-start gap-2 mb-2">
                                     {isDiagnosing ? (
                                       <Spinner size="sm" />
                                     ) : (
                                       <span
-                                        className={`w-6 h-6 rounded-full flex items-center justify-center text-xs flex-shrink-0 ${
+                                        className={`w-6 h-6 flex items-center justify-center text-sm flex-shrink-0 ${
                                           isSuccess
-                                            ? "bg-success text-white"
-                                            : "bg-danger text-white"
+                                            ? "text-success"
+                                            : "text-danger"
                                         }`}
                                       >
                                         {isSuccess ? "✓" : "✗"}
@@ -569,21 +547,19 @@ export function DiagnosisModal({
                     (r) => r.success === false && !r.diagnosing,
                   ) && (
                     <div className="space-y-2 hidden md:block">
-                      <h4 className="text-sm font-semibold text-danger">
-                        失败详情
-                      </h4>
-                      <div className="space-y-2">
+                      <h4 className="text-sm font-semibold">失败详情</h4>
+                      <div className="divide-y divide-divider border-y border-divider">
                         {diagnosisResult.results
                           .filter((r) => r.success === false && !r.diagnosing)
                           .map((result, index) => (
-                            <Alert
-                              key={index}
-                              className="text-xs"
-                              color="danger"
-                              description={result.message || "连接失败"}
-                              title={result.description}
-                              variant="flat"
-                            />
+                            <div key={index} className="py-2 text-xs">
+                              <div className="text-default-500">
+                                {result.description}
+                              </div>
+                              <div className="mt-0.5 text-danger">
+                                {result.message || "连接失败"}
+                              </div>
+                            </div>
                           ))}
                       </div>
                     </div>
@@ -591,7 +567,7 @@ export function DiagnosisModal({
                 </div>
               ) : (
                 <div className="text-center py-16">
-                  <div className="w-16 h-16 bg-default-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <div className="w-16 h-16 flex items-center justify-center mx-auto mb-4">
                     <svg
                       aria-hidden="true"
                       className="w-8 h-8 text-default-400"

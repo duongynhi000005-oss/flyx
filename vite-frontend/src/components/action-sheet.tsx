@@ -1,4 +1,3 @@
-import { Button } from "@/shadcn-bridge/heroui/button";
 import {
   Modal,
   ModalBody,
@@ -6,12 +5,12 @@ import {
   ModalHeader,
 } from "@/shadcn-bridge/heroui/modal";
 
-const modalBase =
-  "!w-[calc(100%-32px)] !mx-auto sm:!w-full rounded-2xl overflow-hidden";
+const modalBase = "!w-[calc(100%-32px)] !mx-auto sm:!w-full overflow-hidden";
 
 export interface SheetAction {
   key: string;
   label: string;
+  /** Only "danger" changes how the action looks (red, listed last). */
   color?: "primary" | "secondary" | "success" | "warning" | "danger";
   disabled?: boolean;
   onPress: () => void;
@@ -33,9 +32,15 @@ export function ActionSheet({
   actions: SheetAction[];
   onClose: () => void;
 }) {
+  // One action per row; destructive ones go last so they are not hit by
+  // accident.
+  const ordered = [
+    ...actions.filter((a) => a.color !== "danger"),
+    ...actions.filter((a) => a.color === "danger"),
+  ];
+
   return (
     <Modal
-      backdrop="blur"
       classNames={{ base: modalBase }}
       isOpen={isOpen}
       placement="center"
@@ -43,31 +48,32 @@ export function ActionSheet({
       onOpenChange={(open) => !open && onClose()}
     >
       <ModalContent>
-        <ModalHeader className="flex flex-col gap-1">
-          <h2 className="text-lg font-bold break-all">{title}</h2>
+        <ModalHeader className="flex flex-col gap-0.5">
+          <h2 className="break-all text-base font-semibold">{title}</h2>
           {subtitle && (
-            <div className="text-small font-normal text-default-500">
+            <div className="text-xs font-normal text-default-400">
               {subtitle}
             </div>
           )}
         </ModalHeader>
-        <ModalBody className="pb-6">
+        <ModalBody className="pb-2">
           {children}
-          <div className="grid grid-cols-3 gap-2">
-            {actions.map((a) => (
-              <Button
+          <div className="-mx-1 divide-y divide-divider border-t border-divider">
+            {ordered.map((a) => (
+              <button
                 key={a.key}
-                className="w-full min-w-0 px-1"
-                color={a.color}
-                isDisabled={a.disabled}
-                variant="flat"
-                onPress={() => {
+                className={`flex h-11 w-full items-center px-1 text-left text-sm transition-colors hover:bg-default-50 disabled:pointer-events-none disabled:opacity-40 ${
+                  a.color === "danger" ? "text-danger" : "text-foreground"
+                }`}
+                disabled={a.disabled}
+                type="button"
+                onClick={() => {
                   onClose();
                   a.onPress();
                 }}
               >
                 {a.label}
-              </Button>
+              </button>
             ))}
           </div>
         </ModalBody>

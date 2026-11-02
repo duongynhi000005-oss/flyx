@@ -81,7 +81,7 @@ import { formatTraffic } from "@/utils/traffic";
 import { latestProbe } from "@/utils/latest-probe";
 
 const modalBase =
-  "!w-[calc(100%-32px)] !mx-auto sm:!w-full rounded-2xl overflow-hidden";
+  "!w-[calc(100%-32px)] !mx-auto sm:!w-full overflow-hidden";
 
 type ConfirmAction = "delete" | "regenerate" | "reset";
 
@@ -1238,7 +1238,7 @@ export default function InboundPage() {
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-default-500">流量</span>
-              <span className="font-mono text-xs">
+              <span className="tabular-nums text-xs">
                 ↑ {formatTraffic(sheetItem.uploadBytes)} · ↓{" "}
                 {formatTraffic(sheetItem.downloadBytes)}
               </span>
@@ -1305,7 +1305,6 @@ export default function InboundPage() {
       />
 
       <Modal
-        backdrop="blur"
         classNames={{ base: modalBase }}
         isOpen={Boolean(details)}
         placement="center"
@@ -1334,7 +1333,7 @@ export default function InboundPage() {
                           {k}
                         </span>
                         <div className="flex items-center gap-1 min-w-0">
-                          <span className="text-sm font-mono break-all text-right">
+                          <span className="text-sm tabular-nums break-all text-right">
                             {v}
                           </span>
                           <Button
@@ -1357,7 +1356,6 @@ export default function InboundPage() {
       </Modal>
 
       <Modal
-        backdrop="blur"
         classNames={{ base: modalBase }}
         isOpen={Boolean(confirm)}
         placement="center"
@@ -1408,7 +1406,6 @@ export default function InboundPage() {
       </Modal>
 
       <Modal
-        backdrop="blur"
         classNames={{ base: modalBase }}
         isOpen={batchDeleteOpen}
         placement="center"

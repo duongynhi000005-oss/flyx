@@ -1947,7 +1947,6 @@ export default function ConfigPage() {
       )}
 
       <Modal
-        backdrop="blur"
         classNames={{
           base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full overflow-hidden",
         }}
@@ -1979,7 +1978,6 @@ export default function ConfigPage() {
       </Modal>
 
       <Modal
-        backdrop="blur"
         classNames={{
           base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full overflow-hidden",
         }}
@@ -2011,7 +2009,6 @@ export default function ConfigPage() {
       </Modal>
 
       <Modal
-        backdrop="blur"
         classNames={{
           base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full overflow-hidden",
         }}

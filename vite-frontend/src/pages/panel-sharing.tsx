@@ -467,7 +467,7 @@ export default function PanelSharingPage() {
       {rows.map(([k, v]) => (
         <div key={k} className="flex justify-between gap-3">
           <span className="shrink-0 text-default-500">{k}</span>
-          <span className="min-w-0 break-all text-right font-mono text-xs leading-5">
+          <span className="min-w-0 break-all text-right tabular-nums text-xs leading-5">
             {v}
           </span>
         </div>
@@ -734,9 +734,8 @@ export default function PanelSharingPage() {
 
       {/* Create Share Modal */}
       <Modal
-        backdrop="blur"
         classNames={{
-          base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full rounded-2xl overflow-hidden",
+          base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full overflow-hidden",
         }}
         isOpen={createShareOpen}
         scrollBehavior="inside"
@@ -848,9 +847,8 @@ export default function PanelSharingPage() {
 
       {/* Edit Share Modal */}
       <Modal
-        backdrop="blur"
         classNames={{
-          base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full rounded-2xl overflow-hidden",
+          base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full overflow-hidden",
         }}
         isOpen={editShareOpen}
         scrollBehavior="inside"
@@ -955,9 +953,8 @@ export default function PanelSharingPage() {
 
       {/* Import Node Modal */}
       <Modal
-        backdrop="blur"
         classNames={{
-          base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full rounded-2xl overflow-hidden",
+          base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full overflow-hidden",
         }}
         isOpen={importNodeOpen}
         onClose={() => setImportNodeOpen(false)}

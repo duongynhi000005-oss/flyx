@@ -35,7 +35,7 @@ import { Select, SelectItem } from "@/shadcn-bridge/heroui/select";
 import { Switch } from "@/shadcn-bridge/heroui/switch";
 
 const modalBase =
-  "!w-[calc(100%-32px)] !mx-auto sm:!w-full rounded-2xl overflow-hidden";
+  "!w-[calc(100%-32px)] !mx-auto sm:!w-full overflow-hidden";
 
 /** Label shown where a panel-managed inbound shows its node or kernel. */
 export const EXTERNAL_LABEL = "导入的节点";
@@ -197,7 +197,6 @@ export function ImportModal({
 
   return (
     <Modal
-      backdrop="blur"
       classNames={{ base: modalBase }}
       isOpen={isOpen}
       placement="center"
@@ -444,7 +443,6 @@ export function ExternalEditModal({
 
   return (
     <Modal
-      backdrop="blur"
       classNames={{ base: modalBase }}
       isOpen={Boolean(item)}
       placement="center"

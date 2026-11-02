@@ -18,7 +18,7 @@ import {
 } from "@/shadcn-bridge/heroui/modal";
 
 const modalBase =
-  "!w-[calc(100%-32px)] !mx-auto sm:!w-full rounded-2xl overflow-hidden";
+  "!w-[calc(100%-32px)] !mx-auto sm:!w-full overflow-hidden";
 
 export async function copyText(text: string, label = "已复制") {
   await copyWithToast(text, label);
@@ -85,7 +85,7 @@ function ShareEntryCard({ entry }: { entry: InboundShareEntry }) {
   const text = (asConf && entry.conf) || entry.uri || entry.surge;
 
   return (
-    <div className="rounded-2xl border border-divider p-4 space-y-3">
+    <div className="rounded-lg border border-divider p-4 space-y-3">
       <div className="min-w-0">
         <div className="flex items-center gap-2 min-w-0">
           <Chip
@@ -201,7 +201,6 @@ export function ShareModal({
 
   return (
     <Modal
-      backdrop="blur"
       classNames={{ base: modalBase }}
       isOpen={Boolean(item)}
       placement="center"

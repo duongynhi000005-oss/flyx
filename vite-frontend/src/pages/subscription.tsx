@@ -87,8 +87,7 @@ import {
   groupSourceText,
 } from "@/pages/subscription/node-groups";
 
-const modalBase =
-  "!w-[calc(100%-32px)] !mx-auto sm:!w-full rounded-2xl overflow-hidden";
+const modalBase = "!w-[calc(100%-32px)] !mx-auto sm:!w-full overflow-hidden";
 
 const EMPTY_PIPELINE: SubPipeline = {
   lines: "",
@@ -798,10 +797,10 @@ function Editor({
               }
               title="链式代理"
             >
-              <div className="rounded-2xl border border-primary-200 bg-primary-50/60 p-4 dark:border-primary-500/30 dark:bg-primary-900/20">
+              <div className="border-l-2 border-divider py-1 pl-3">
                 <div className="flex items-center gap-2">
                   <span
-                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${chainOn ? "bg-success-100 text-success-700 dark:bg-success-500/20" : "bg-default-100 text-default-500"}`}
+                    className={`text-xs font-medium ${chainOn ? "text-success" : "text-default-500"}`}
                   >
                     {chainOn ? "已开启" : "未开启"}
                   </span>
@@ -811,7 +810,11 @@ function Editor({
                     <span key={s} className="flex items-center gap-2">
                       {i > 0 && <span className="text-default-400">→</span>}
                       <span
-                        className={`rounded-lg px-2 py-1 ${s === "中转节点" ? "bg-secondary-100 text-secondary-700 dark:bg-secondary-500/20" : s === "落地节点" ? "bg-warning-100 text-warning-700 dark:bg-warning-500/20" : "bg-content1 text-default-600"}`}
+                        className={
+                          s === "中转节点" || s === "落地节点"
+                            ? "font-medium text-foreground"
+                            : "text-default-500"
+                        }
                       >
                         {s}
                       </span>
@@ -1464,7 +1467,6 @@ export default function SubscriptionPage() {
 
       {/* Detail: import into a client, copy links, actions. */}
       <Modal
-        backdrop="blur"
         classNames={{ base: modalBase }}
         isOpen={Boolean(detail) && !confirm}
         placement="center"
@@ -1644,7 +1646,6 @@ export default function SubscriptionPage() {
       </Modal>
 
       <Modal
-        backdrop="blur"
         classNames={{ base: modalBase }}
         isOpen={Boolean(draft)}
         placement="center"
@@ -1672,7 +1673,6 @@ export default function SubscriptionPage() {
       </Modal>
 
       <Modal
-        backdrop="blur"
         classNames={{ base: modalBase }}
         isOpen={Boolean(groupDraft)}
         placement="center"
@@ -1705,7 +1705,6 @@ export default function SubscriptionPage() {
       </Modal>
 
       <Modal
-        backdrop="blur"
         classNames={{ base: modalBase }}
         isOpen={Boolean(confirm)}
         placement="center"
