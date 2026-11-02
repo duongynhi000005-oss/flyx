@@ -8,7 +8,6 @@ import {
   ModalBody,
   ModalFooter,
 } from "@/shadcn-bridge/heroui/modal";
-import { Chip } from "@/shadcn-bridge/heroui/chip";
 import { Spinner } from "@/shadcn-bridge/heroui/spinner";
 import { Alert } from "@/shadcn-bridge/heroui/alert";
 import {
@@ -68,17 +67,14 @@ export function TunnelDiagnosisModal({
       <ModalContent>
         {() => (
           <>
-            <ModalHeader
-              closable
-              className="flex flex-col gap-1 border-b border-divider"
-            >
+            <ModalHeader closable className="flex flex-col gap-0.5">
               <h2 className="text-base font-semibold">隧道诊断结果</h2>
               {currentDiagnosisTunnel && (
                 <div className="flex items-center gap-2">
                   <span className="text-small text-default-500">
                     {currentDiagnosisTunnel.name}
                   </span>
-                  <span className="text-xs text-default-400">
+                  <span className="text-xs font-normal text-default-400">
                     {currentDiagnosisTunnel.type === 1
                       ? "端口转发"
                       : "隧道转发"}
@@ -100,7 +96,7 @@ export function TunnelDiagnosisModal({
                             : "?"}
                         </span>
                       </div>
-                      <span className="text-xs text-default-400">
+                      <span className="text-xs font-normal text-default-400">
                         流式更新中
                       </span>
                     </div>
@@ -183,11 +179,8 @@ export function TunnelDiagnosisModal({
                         if (results.length === 0) return null;
 
                         return (
-                          <div
-                            key={title}
-                            className="border border-divider rounded-lg overflow-hidden"
-                          >
-                            <div className="px-3 py-2 border-b border-divider">
+                          <div key={title}>
+                            <div className="pb-1.5">
                               <h3 className="text-sm font-semibold text-foreground">
                                 {title}
                               </h3>
@@ -195,19 +188,19 @@ export function TunnelDiagnosisModal({
                             <table className="w-full text-sm">
                               <thead className="border-b border-divider text-default-500">
                                 <tr>
-                                  <th className="px-3 py-2 text-left font-semibold text-xs">
+                                  <th className="py-2 pr-3 text-left font-normal text-xs">
                                     路径
                                   </th>
-                                  <th className="px-3 py-2 text-center font-semibold text-xs w-20">
+                                  <th className="px-3 py-2 text-center font-normal text-xs w-20">
                                     状态
                                   </th>
-                                  <th className="px-3 py-2 text-center font-semibold text-xs w-24">
+                                  <th className="px-3 py-2 text-center font-normal text-xs w-24">
                                     延迟(ms)
                                   </th>
-                                  <th className="px-3 py-2 text-center font-semibold text-xs w-24">
+                                  <th className="px-3 py-2 text-center font-normal text-xs w-24">
                                     丢包率
                                   </th>
-                                  <th className="px-3 py-2 text-center font-semibold text-xs w-20">
+                                  <th className="px-3 py-2 text-center font-normal text-xs w-20">
                                     质量
                                   </th>
                                 </tr>
@@ -228,7 +221,7 @@ export function TunnelDiagnosisModal({
                                       key={index}
                                       className="hover:bg-default-50"
                                     >
-                                      <td className="px-3 py-2">
+                                      <td className="py-2 pr-3">
                                         <div className="flex items-center gap-2">
                                           {isDiagnosing ? (
                                             <Spinner size="sm" />
@@ -251,31 +244,28 @@ export function TunnelDiagnosisModal({
                                               {result.targetIp}:
                                               {result.targetPort}
                                             </div>
+                                            {!isSuccess && !isDiagnosing && (
+                                              <div className="mt-0.5 text-xs text-danger break-all">
+                                                {result.message || "连接失败"}
+                                              </div>
+                                            )}
                                           </div>
                                         </div>
                                       </td>
                                       <td className="px-3 py-2 text-center">
-                                        <Chip
-                                          color={
-                                            isDiagnosing
-                                              ? "warning"
-                                              : isSuccess
-                                                ? "success"
-                                                : "danger"
-                                          }
-                                          size="sm"
-                                          variant="flat"
+                                        <span
+                                          className={`text-xs ${isDiagnosing ? "text-default-400" : isSuccess ? "text-default-600" : "text-danger"}`}
                                         >
                                           {isDiagnosing
                                             ? "诊断中"
                                             : isSuccess
                                               ? "成功"
                                               : "失败"}
-                                        </Chip>
+                                        </span>
                                       </td>
                                       <td className="px-3 py-2 text-center">
                                         {isSuccess ? (
-                                          <span className="font-semibold text-primary">
+                                          <span className="tabular-nums text-foreground">
                                             {result.averageTime?.toFixed(0)}
                                           </span>
                                         ) : (
@@ -287,11 +277,7 @@ export function TunnelDiagnosisModal({
                                       <td className="px-3 py-2 text-center">
                                         {isSuccess ? (
                                           <span
-                                            className={`font-semibold ${
-                                              (result.packetLoss || 0) > 0
-                                                ? "text-warning"
-                                                : "text-success"
-                                            }`}
+                                            className={`tabular-nums ${(result.packetLoss || 0) > 0 ? "text-warning" : "text-foreground"}`}
                                           >
                                             {result.packetLoss?.toFixed(1)}%
                                           </span>
@@ -303,14 +289,11 @@ export function TunnelDiagnosisModal({
                                       </td>
                                       <td className="px-3 py-2 text-center">
                                         {isSuccess && quality ? (
-                                          <Chip
-                                            className="text-xs whitespace-nowrap"
-                                            color={quality.color as any}
-                                            size="sm"
-                                            variant="flat"
+                                          <span
+                                            className={`whitespace-nowrap text-xs ${quality.color === "warning" ? "text-warning" : quality.color === "danger" ? "text-danger" : "text-default-600"}`}
                                           >
                                             {quality.text}
-                                          </Chip>
+                                          </span>
                                         ) : (
                                           <span className="text-default-400">
                                             -
@@ -329,10 +312,7 @@ export function TunnelDiagnosisModal({
                       return (
                         <>
                           {/* 入口测试 */}
-                          {renderTableSection(
-                            "🚪 入口测试",
-                            groupedResults.entry,
-                          )}
+                          {renderTableSection("入口测试", groupedResults.entry)}
 
                           {/* 链路测试（按跳数排序） */}
                           {Object.keys(groupedResults.chains)
@@ -340,16 +320,13 @@ export function TunnelDiagnosisModal({
                             .sort((a, b) => a - b)
                             .map((hop) =>
                               renderTableSection(
-                                `🔗 转发链 - 第${hop}跳`,
+                                `转发链 · 第 ${hop} 跳`,
                                 groupedResults.chains[hop],
                               ),
                             )}
 
                           {/* 出口测试 */}
-                          {renderTableSection(
-                            "🚀 出口测试",
-                            groupedResults.exit,
-                          )}
+                          {renderTableSection("出口测试", groupedResults.exit)}
                         </>
                       );
                     })()}
@@ -408,105 +385,48 @@ export function TunnelDiagnosisModal({
                                   key={index}
                                   className="border-b border-divider py-3 last:border-b-0"
                                 >
-                                  <div className="flex items-start gap-2 mb-2">
-                                    {isDiagnosing ? (
-                                      <Spinner size="sm" />
-                                    ) : (
-                                      <span
-                                        className={`w-6 h-6 flex items-center justify-center text-sm flex-shrink-0 ${
-                                          isSuccess
-                                            ? "text-success"
-                                            : "text-danger"
-                                        }`}
-                                      >
-                                        {isSuccess ? "✓" : "✗"}
-                                      </span>
-                                    )}
-                                    <div className="flex-1 min-w-0">
-                                      <div className="font-semibold text-sm text-foreground break-words">
+                                  <div className="flex items-start gap-2">
+                                    <span className="flex h-5 w-4 shrink-0 items-center justify-center">
+                                      {isDiagnosing ? (
+                                        <Spinner size="sm" />
+                                      ) : (
+                                        <span
+                                          className={`text-sm ${isSuccess ? "text-success" : "text-danger"}`}
+                                        >
+                                          {isSuccess ? "✓" : "✗"}
+                                        </span>
+                                      )}
+                                    </span>
+                                    <div className="min-w-0 flex-1">
+                                      <div className="break-words text-sm text-foreground">
                                         {result.description}
                                       </div>
-                                      <div className="text-xs text-default-500 mt-0.5 break-all">
+                                      <div className="mt-0.5 break-all text-xs text-default-400">
                                         {result.targetIp}:{result.targetPort}
                                       </div>
-                                    </div>
-                                    <Chip
-                                      className="flex-shrink-0"
-                                      color={
-                                        isDiagnosing
-                                          ? "warning"
-                                          : isSuccess
-                                            ? "success"
-                                            : "danger"
-                                      }
-                                      size="sm"
-                                      variant="flat"
-                                    >
-                                      {isDiagnosing
-                                        ? "诊断中"
-                                        : isSuccess
-                                          ? "成功"
-                                          : "失败"}
-                                    </Chip>
-                                  </div>
-
-                                  {isSuccess ? (
-                                    <div className="grid grid-cols-3 gap-2 mt-2 pt-2 border-t border-divider">
-                                      <div className="text-center">
-                                        <div className="text-lg font-bold text-primary">
-                                          {result.averageTime?.toFixed(0)}
-                                        </div>
-                                        <div className="text-xs text-default-500">
-                                          延迟(ms)
-                                        </div>
-                                      </div>
-                                      <div className="text-center">
-                                        <div
-                                          className={`text-lg font-bold ${
-                                            (result.packetLoss || 0) > 0
-                                              ? "text-warning"
-                                              : "text-success"
-                                          }`}
-                                        >
-                                          {result.packetLoss?.toFixed(1)}%
-                                        </div>
-                                        <div className="text-xs text-default-500">
-                                          丢包率
-                                        </div>
-                                      </div>
-                                      <div className="text-center">
-                                        {quality && (
-                                          <>
-                                            <Chip
-                                              className="text-xs whitespace-nowrap"
-                                              color={quality.color as any}
-                                              size="sm"
-                                              variant="flat"
-                                            >
-                                              {quality.text}
-                                            </Chip>
-                                            <div className="text-xs text-default-500 mt-0.5">
-                                              质量
-                                            </div>
-                                          </>
-                                        )}
-                                      </div>
-                                    </div>
-                                  ) : (
-                                    <div className="mt-2 pt-2 border-t border-divider">
                                       <div
-                                        className={`text-xs ${
-                                          isDiagnosing
-                                            ? "text-warning"
-                                            : "text-danger"
+                                        className={`mt-1 text-xs tabular-nums ${
+                                          isSuccess
+                                            ? "text-default-600"
+                                            : isDiagnosing
+                                              ? "text-default-400"
+                                              : "text-danger"
                                         }`}
                                       >
-                                        {isDiagnosing
-                                          ? result.message || "诊断中..."
-                                          : result.message || "连接失败"}
+                                        {isSuccess
+                                          ? [
+                                              `${result.averageTime?.toFixed(0)} ms`,
+                                              `丢包 ${result.packetLoss?.toFixed(1)}%`,
+                                              quality?.text,
+                                            ]
+                                              .filter(Boolean)
+                                              .join(" · ")
+                                          : isDiagnosing
+                                            ? result.message || "诊断中…"
+                                            : result.message || "连接失败"}
                                       </div>
                                     </div>
-                                  )}
+                                  </div>
                                 </div>
                               );
                             })}
@@ -517,10 +437,7 @@ export function TunnelDiagnosisModal({
                       return (
                         <>
                           {/* 入口测试 */}
-                          {renderCardSection(
-                            "🚪 入口测试",
-                            groupedResults.entry,
-                          )}
+                          {renderCardSection("入口测试", groupedResults.entry)}
 
                           {/* 链路测试（按跳数排序） */}
                           {Object.keys(groupedResults.chains)
@@ -528,43 +445,17 @@ export function TunnelDiagnosisModal({
                             .sort((a, b) => a - b)
                             .map((hop) =>
                               renderCardSection(
-                                `🔗 转发链 - 第${hop}跳`,
+                                `转发链 · 第 ${hop} 跳`,
                                 groupedResults.chains[hop],
                               ),
                             )}
 
                           {/* 出口测试 */}
-                          {renderCardSection(
-                            "🚀 出口测试",
-                            groupedResults.exit,
-                          )}
+                          {renderCardSection("出口测试", groupedResults.exit)}
                         </>
                       );
                     })()}
                   </div>
-
-                  {/* 失败详情（仅桌面端显示，移动端已在卡片中显示） */}
-                  {diagnosisResult.results.some(
-                    (r) => r.success === false && !r.diagnosing,
-                  ) && (
-                    <div className="space-y-2 hidden md:block">
-                      <h4 className="text-sm font-semibold">失败详情</h4>
-                      <div className="divide-y divide-divider border-y border-divider">
-                        {diagnosisResult.results
-                          .filter((r) => r.success === false && !r.diagnosing)
-                          .map((result, index) => (
-                            <div key={index} className="py-2 text-xs">
-                              <div className="text-default-500">
-                                {result.description}
-                              </div>
-                              <div className="mt-0.5 text-danger">
-                                {result.message || "连接失败"}
-                              </div>
-                            </div>
-                          ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
               ) : (
                 <div className="text-center py-16">
@@ -584,7 +475,7 @@ export function TunnelDiagnosisModal({
                       />
                     </svg>
                   </div>
-                  <h3 className="text-lg font-semibold text-foreground">
+                  <h3 className="text-sm font-semibold text-foreground">
                     暂无诊断数据
                   </h3>
                 </div>

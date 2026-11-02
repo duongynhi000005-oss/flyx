@@ -66,24 +66,24 @@ export const getForwardDiagnosisQualityDisplay = (
   }
 
   if (averageTime < 30 && packetLoss === 0) {
-    return { text: "🚀 优秀", color: "success" };
+    return { text: "优秀", color: "success" };
   }
 
   if (averageTime < 50 && packetLoss === 0) {
-    return { text: "✨ 很好", color: "success" };
+    return { text: "很好", color: "success" };
   }
 
   if (averageTime < 100 && packetLoss < 1) {
-    return { text: "👍 良好", color: "primary" };
+    return { text: "良好", color: "primary" };
   }
 
   if (averageTime < 150 && packetLoss < 2) {
-    return { text: "😐 一般", color: "warning" };
+    return { text: "一般", color: "warning" };
   }
 
   if (averageTime < 200 && packetLoss < 5) {
-    return { text: "😟 较差", color: "warning" };
+    return { text: "较差", color: "warning" };
   }
 
-  return { text: "😵 很差", color: "danger" };
+  return { text: "很差", color: "danger" };
 };
