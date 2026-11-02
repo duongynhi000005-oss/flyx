@@ -2,7 +2,6 @@ import type { Node } from "@/pages/node/types";
 
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { Pin } from "lucide-react";
 
 import { getConfigByName, setNodeLatencyTargets } from "@/api";
 import { Button } from "@/shadcn-bridge/heroui/button";
@@ -20,11 +19,9 @@ import {
   parseLatencyTargets,
 } from "@/utils/latency-targets";
 
-const MAX_PINNED = 3;
-
 /**
  * Chooses which reference points one or more nodes measure: the defaults,
- * or their own selection with up to three pinned for cards.
+ * or their own selection.
  */
 export function LatencyTargetsModal({
   nodes,
@@ -39,7 +36,6 @@ export function LatencyTargetsModal({
   const [pool, setPool] = useState<LatencyTarget[]>([]);
   const [custom, setCustom] = useState(false);
   const [points, setPoints] = useState<string[]>([]);
-  const [pinned, setPinned] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const open = nodes.length > 0;
   const batch = nodes.length > 1;
@@ -56,7 +52,6 @@ export function LatencyTargetsModal({
 
     setCustom(Boolean(own));
     setPoints(own?.points ?? []);
-    setPinned(own?.pinned ?? []);
   }, [open, nodes, batch]);
 
   const defaults = pool.filter((t) => t.enabled);
@@ -64,7 +59,6 @@ export function LatencyTargetsModal({
   const startCustom = () => {
     if (points.length === 0) {
       setPoints(defaults.map((t) => t.name));
-      setPinned(defaults.filter((t) => t.pinned).map((t) => t.name));
     }
     setCustom(true);
   };
@@ -73,17 +67,7 @@ export function LatencyTargetsModal({
     setPoints((prev) =>
       on ? [...prev, name] : prev.filter((n) => n !== name),
     );
-    if (!on) setPinned((prev) => prev.filter((n) => n !== name));
   };
-
-  const togglePin = (name: string) =>
-    setPinned((prev) =>
-      prev.includes(name)
-        ? prev.filter((n) => n !== name)
-        : prev.length < MAX_PINNED
-          ? [...prev, name]
-          : prev,
-    );
 
   const save = async () => {
     setSaving(true);
@@ -93,7 +77,8 @@ export function LatencyTargetsModal({
         custom,
         // Keep pool order.
         points: pool.map((t) => t.name).filter((n) => points.includes(n)),
-        pinned,
+        // Pins chose what node cards showed; lists show the worst point.
+        pinned: [],
       });
 
       if (res.code !== 0) {
@@ -113,10 +98,10 @@ export function LatencyTargetsModal({
 
   const modeButton = (on: boolean, label: string, onPress: () => void) => (
     <button
-      className={`flex-1 rounded-md px-3 py-1.5 text-sm transition-colors ${
+      className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
         on
-          ? "bg-content1 font-medium shadow-sm"
-          : "text-default-500 hover:text-default-700"
+          ? "bg-default-100 font-medium text-foreground"
+          : "text-default-500 hover:text-foreground"
       }`}
       type="button"
       onClick={onPress}
@@ -127,9 +112,8 @@ export function LatencyTargetsModal({
 
   return (
     <Modal
-      backdrop="blur"
       classNames={{
-        base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full rounded-2xl overflow-hidden",
+        base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full overflow-hidden",
       }}
       isOpen={open}
       placement="center"
@@ -139,15 +123,15 @@ export function LatencyTargetsModal({
     >
       <ModalContent>
         <ModalHeader className="flex flex-col gap-0.5">
-          <h2 className="text-lg font-bold">
+          <h2 className="text-base font-semibold">
             {batch ? `为 ${nodes.length} 个服务器设置测试点` : "测试点"}
           </h2>
-          <p className="truncate text-xs font-normal text-default-500">
+          <p className="truncate text-xs font-normal text-default-400">
             {nodes.map((n) => n.name).join("、")}
           </p>
         </ModalHeader>
         <ModalBody className="space-y-3">
-          <div className="flex gap-1 rounded-lg bg-default-100 p-1">
+          <div className="flex gap-1">
             {modeButton(!custom, "跟随默认", () => setCustom(false))}
             {modeButton(custom, "自定义", startCustom)}
           </div>
@@ -165,9 +149,8 @@ export function LatencyTargetsModal({
                 {defaults.map((t) => (
                   <span
                     key={t.name}
-                    className="inline-flex items-center gap-1 rounded-full bg-default-100 px-2 py-0.5 text-xs"
+                    className="rounded-md bg-default-100 px-2 py-0.5 text-xs"
                   >
-                    {t.pinned && <Pin className="h-3 w-3 text-primary" />}
                     {t.name}
                   </span>
                 ))}
@@ -176,10 +159,7 @@ export function LatencyTargetsModal({
           ) : (
             <div className="space-y-2">
               <div className="flex items-center justify-between text-xs text-default-500">
-                <span>
-                  已选 {points.length} 个 · 卡片显示 {pinned.length}/
-                  {MAX_PINNED}
-                </span>
+                <span>已选 {points.length} 个</span>
                 <span className="flex gap-3">
                   <button
                     className="text-primary"
@@ -191,10 +171,7 @@ export function LatencyTargetsModal({
                   <button
                     className="text-primary"
                     type="button"
-                    onClick={() => {
-                      setPoints([]);
-                      setPinned([]);
-                    }}
+                    onClick={() => setPoints([])}
                   >
                     清空
                   </button>
@@ -203,7 +180,6 @@ export function LatencyTargetsModal({
               <div className="divide-y divide-divider rounded-lg border border-divider">
                 {pool.map((t) => {
                   const on = points.includes(t.name);
-                  const pin = pinned.includes(t.name);
 
                   return (
                     <div
@@ -217,23 +193,9 @@ export function LatencyTargetsModal({
                       >
                         <span className="text-sm">{t.name}</span>
                       </Checkbox>
-                      <span className="min-w-0 flex-1 truncate font-mono text-[11px] text-default-400">
+                      <span className="min-w-0 flex-1 truncate text-right font-mono text-[11px] text-default-400">
                         {t.host}:{t.port}
                       </span>
-                      <button
-                        className={`inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-xs transition-colors disabled:opacity-30 ${
-                          pin
-                            ? "bg-primary/10 text-primary"
-                            : "text-default-400 hover:text-default-600"
-                        }`}
-                        disabled={!on || (!pin && pinned.length >= MAX_PINNED)}
-                        title="卡片上固定显示"
-                        type="button"
-                        onClick={() => togglePin(t.name)}
-                      >
-                        <Pin className="h-3 w-3" />
-                        卡片
-                      </button>
                     </div>
                   );
                 })}
@@ -243,7 +205,7 @@ export function LatencyTargetsModal({
           {custom && pool.length > 0 && points.length === 0 && (
             <p className="text-xs text-default-500">
               一个都不选：{batch ? "这些服务器" : "这台服务器"}
-              不测延迟和回程，卡片上显示“不测延迟”。
+              不测延迟和回程，列表上显示“不测延迟”。
             </p>
           )}
           {batch && (

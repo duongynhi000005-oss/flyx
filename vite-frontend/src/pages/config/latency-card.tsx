@@ -1,7 +1,6 @@
 import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
 
 import { Button } from "@/shadcn-bridge/heroui/button";
-import { Checkbox } from "@/shadcn-bridge/heroui/checkbox";
 import {
   Dropdown,
   DropdownItem,
@@ -19,7 +18,6 @@ import {
 export { LATENCY_TARGETS_KEY };
 
 const MAX_TARGETS = 30;
-const MAX_PINNED = 3;
 
 // Province × carrier TCP-ping addresses on carrier CDN nodes, port 80.
 const CITIES = [
@@ -49,12 +47,8 @@ export function latencySummary(configs: Record<string, string>): string {
   const enabled = targets.filter((t) => t.enabled);
 
   if (targets.length === 0) return "未设置 · 延迟从面板服务器测";
-  const pinned = enabled.filter((t) => t.pinned).map((t) => t.name);
 
-  return [
-    `${targets.length} 个测试点，默认测 ${enabled.length} 个`,
-    pinned.length ? `卡片显示 ${pinned.join("、")}` : "卡片显示最差和最好的",
-  ].join(" · ");
+  return `${targets.length} 个测试点，默认测 ${enabled.length} 个`;
 }
 
 /** Reference points nodes measure latency to, saved with the page. */
@@ -66,11 +60,16 @@ export function LatencySettings({
   onChange: (key: string, value: string) => void;
 }) {
   const targets = parseLatencyTargets(configs[LATENCY_TARGETS_KEY]);
-  const pinnedCount = targets.filter((t) => t.pinned).length;
   const names = new Set(targets.map((t) => t.name));
 
+  // Pins chose what node cards showed; cards are gone, so they are dropped.
   const save = (next: LatencyTarget[]) =>
-    onChange(LATENCY_TARGETS_KEY, next.length ? JSON.stringify(next) : "");
+    onChange(
+      LATENCY_TARGETS_KEY,
+      next.length
+        ? JSON.stringify(next.map(({ pinned: _pinned, ...t }) => t))
+        : "",
+    );
   const update = (i: number, patch: Partial<LatencyTarget>) =>
     save(targets.map((t, j) => (j === i ? { ...t, ...patch } : t)));
   const move = (i: number, by: number) => {
@@ -95,8 +94,7 @@ export function LatencySettings({
         服务器定时用 TCP
         连接测到这些地址的延迟和丢包，代表该地区运营商用户到服务器的延迟。
         打开“默认”的测试点所有服务器都测；某台服务器要测别的，到服务器页的“测试点”单独选或批量设置。
-        卡片显示勾选“卡片显示”的测试点（最多 {MAX_PINNED}{" "}
-        个，没选够时补最差和最好的）。不设置时，入站延迟仍从面板服务器测。
+        列表上显示延迟最高的测试点，点开可以看全部。不设置时，入站延迟仍从面板服务器测。
       </p>
 
       {targets.length === 0 && (
@@ -108,11 +106,7 @@ export function LatencySettings({
               size="sm"
               variant="flat"
               onPress={() =>
-                add(
-                  PRESETS.filter((p) => RECOMMENDED.includes(p.name)).map(
-                    (p) => ({ ...p, pinned: true }),
-                  ),
-                )
+                add(PRESETS.filter((p) => RECOMMENDED.includes(p.name)))
               }
             >
               添加三网推荐（{RECOMMENDED.join(" / ")}）
@@ -173,14 +167,6 @@ export function LatencySettings({
                 />
                 默认
               </span>
-              <Checkbox
-                isDisabled={!t.pinned && pinnedCount >= MAX_PINNED}
-                isSelected={Boolean(t.pinned)}
-                size="sm"
-                onValueChange={(v) => update(i, { pinned: v })}
-              >
-                <span className="text-xs">卡片显示</span>
-              </Checkbox>
               <span className="ml-auto flex items-center gap-0.5">
                 <Button
                   isIconOnly
