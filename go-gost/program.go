@@ -80,8 +80,13 @@ func (p *program) Start() (err error) {
 		os.Exit(0)
 	}
 
-	if err := loader.Load(cfg); err != nil {
+	skipped, err := loader.LoadStartup(cfg)
+	if err != nil {
 		return err
+	}
+	for _, e := range skipped {
+		// Keep the agent online so the panel can still reach and fix the rule.
+		logger.Default().Errorf("skip service at startup: %v", e)
 	}
 
 	if err := p.run(cfg); err != nil {

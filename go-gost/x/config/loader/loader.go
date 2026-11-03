@@ -32,6 +32,20 @@ func Load(cfg *config.Config) error {
 	return defaultLoader.Load(cfg)
 }
 
+// LoadStartup loads the persisted config when the agent starts. Unlike Load,
+// a service that fails to start (for example its port is already taken by
+// another process or by a duplicate rule) is logged and skipped instead of
+// aborting the whole load: otherwise one bad rule keeps the agent in a crash
+// loop and the node stays offline, so the panel can never fix it. The skipped
+// services stay in the config; their errors are returned for reporting.
+func LoadStartup(cfg *config.Config) ([]error, error) {
+	var skipped []error
+	err := defaultLoader.load(cfg, func(name string, err error) {
+		skipped = append(skipped, fmt.Errorf("service %s: %w", name, err))
+	})
+	return skipped, err
+}
+
 // Reload replaces the runtime and commits the config only after it starts.
 // The caller must hold config.LockMutation, including while parsing cfg, so the
 // rollback snapshot includes every previously acknowledged runtime command.
@@ -63,6 +77,12 @@ func apply(cfg *config.Config, run func(*config.Config) error) error {
 type loader struct{}
 
 func (l *loader) Load(cfg *config.Config) error {
+	return l.load(cfg, nil)
+}
+
+// load registers cfg. With a nil skipService any service error aborts the
+// load; otherwise the failed service is reported to skipService and skipped.
+func (l *loader) load(cfg *config.Config, skipService func(name string, err error)) error {
 	logCfg := cfg.Log
 	if logCfg == nil {
 		logCfg = &config.LogConfig{}
@@ -75,14 +95,14 @@ func (l *loader) Load(cfg *config.Config) error {
 	}
 	parsing.SetDefaultTLSConfig(tlsCfg)
 
-	if err := register(cfg); err != nil {
+	if err := register(cfg, skipService); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func register(cfg *config.Config) error {
+func register(cfg *config.Config, skipService func(name string, err error)) error {
 	if cfg == nil {
 		return nil
 	}
@@ -255,11 +275,19 @@ func register(cfg *config.Config) error {
 		}
 		svc, err := service_parser.ParseService(svcCfg)
 		if err != nil {
+			if skipService != nil {
+				skipService(svcCfg.Name, err)
+				continue
+			}
 			return err
 		}
 		if svc != nil {
 			if err := registry.ServiceRegistry().Register(svcCfg.Name, svc); err != nil {
 				svc.Close()
+				if skipService != nil {
+					skipService(svcCfg.Name, err)
+					continue
+				}
 				return err
 			}
 		}
