@@ -107,7 +107,15 @@ func TestFlowUploadAggregatesRepeatedItemsAndDisablesQuotaImmediately(t *testing
 	if err != nil {
 		t.Fatalf("get tunnel metrics after second request: %v", err)
 	}
-	if len(metrics) != 1 || metrics[0].BytesIn != 140 || metrics[0].BytesOut != 140 {
-		t.Fatalf("expected one aggregated metric row after second request, got %#v", metrics)
+	// Buckets are per wall-clock minute, so the two requests land in two
+	// rows when they straddle a minute boundary; the totals must match
+	// either way.
+	var sumIn, sumOut int64
+	for _, m := range metrics {
+		sumIn += m.BytesIn
+		sumOut += m.BytesOut
+	}
+	if len(metrics) == 0 || len(metrics) > 2 || sumIn != 140 || sumOut != 140 {
+		t.Fatalf("expected aggregated metrics totalling 140/140 after second request, got %#v", metrics)
 	}
 }
