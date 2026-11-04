@@ -4,6 +4,13 @@
 
 完整的提交记录见 [GitHub Releases](https://github.com/kure29/flyx/releases)。
 
+## 3.5.5
+
+2026-11-04
+
+- **修复 Alpine 等系统上 sing-box 内核无法启动**：sing-box 1.13 起官方默认的 Linux 安装包依赖 glibc，在 Alpine 等 musl 系统上安装后会报「进程退出: fork/exec …/sing-box: no such file or directory」。现在 1.13 及以后的版本（包括 latest）改为下载静态编译的 musl 版本，任何 Linux 都能运行；32 位 x86 和 ARMv7 服务器也能正常安装了。之前已经装坏的服务器，升级面板后在该服务器上删除 sing-box 内核再重新添加即可
+- **升级**：只需升级面板，节点 agent 不用升级
+
 ## 3.5.4
 
 2026-11-04
