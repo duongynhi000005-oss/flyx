@@ -5,6 +5,7 @@ package kernel
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -76,6 +77,10 @@ type Download struct {
 	GitHubAsset string `json:"-"`
 	// Mirrorable: the GitHub download mirror (github_proxy_url) may be used.
 	Mirrorable bool `json:"-"`
+	// Legacy, when set, replaces this download for versions older than
+	// LegacyBefore (release asset naming changed at that version).
+	Legacy       *Download `json:"-"`
+	LegacyBefore string    `json:"-"`
 }
 
 type Info struct {
@@ -110,14 +115,30 @@ var xrayDownload = &Download{
 
 // sing-box publishes no checksum files; the agent verifies against the
 // GitHub release asset digest.
+//
+// Since 1.13 the unsuffixed Linux asset is a purego build: it is linked
+// against glibc's dynamic loader, so on musl systems such as Alpine exec
+// fails with "no such file or directory", and 386/armv7 have no unsuffixed
+// asset at all. The -musl asset is statically linked and runs on any Linux.
+// Older releases only have the unsuffixed asset, which was static then.
 var singboxDownload = &Download{
-	URL:         "https://github.com/SagerNet/sing-box/releases/download/v{VERSION}/sing-box-{VERSION}-linux-{ARCH}.tar.gz",
-	Archive:     "tar.gz",
-	BinName:     "sing-box",
-	ArchMap:     map[string]string{"amd64": "amd64", "arm64": "arm64", "arm": "armv7", "386": "386"},
-	GitHubRepo:  "SagerNet/sing-box",
-	GitHubAsset: "sing-box-{VERSION}-linux-{ARCH}.tar.gz",
-	Mirrorable:  true,
+	URL:          "https://github.com/SagerNet/sing-box/releases/download/v{VERSION}/sing-box-{VERSION}-linux-{ARCH}-musl.tar.gz",
+	Archive:      "tar.gz",
+	BinName:      "sing-box",
+	ArchMap:      map[string]string{"amd64": "amd64", "arm64": "arm64", "arm": "armv7", "386": "386"},
+	GitHubRepo:   "SagerNet/sing-box",
+	GitHubAsset:  "sing-box-{VERSION}-linux-{ARCH}-musl.tar.gz",
+	Mirrorable:   true,
+	LegacyBefore: "1.13.0",
+	Legacy: &Download{
+		URL:         "https://github.com/SagerNet/sing-box/releases/download/v{VERSION}/sing-box-{VERSION}-linux-{ARCH}.tar.gz",
+		Archive:     "tar.gz",
+		BinName:     "sing-box",
+		ArchMap:     map[string]string{"amd64": "amd64", "arm64": "arm64", "arm": "armv7", "386": "386"},
+		GitHubRepo:  "SagerNet/sing-box",
+		GitHubAsset: "sing-box-{VERSION}-linux-{ARCH}.tar.gz",
+		Mirrorable:  true,
+	},
 }
 
 // Snell is closed source and only distributed by Surge; the official site has
@@ -349,6 +370,9 @@ func ExtraDownload(d *Download, version, proxy string) (map[string]interface{}, 
 }
 
 func downloadSpec(d *Download, version, proxy string) (map[string]interface{}, error) {
+	if d.Legacy != nil && !strings.EqualFold(version, "latest") && version != "" && versionBefore(version, d.LegacyBefore) {
+		d = d.Legacy
+	}
 	proxy = strings.TrimSuffix(strings.TrimSpace(proxy), "/")
 	if !d.Mirrorable {
 		proxy = ""
@@ -408,4 +432,39 @@ func downloadSpec(d *Download, version, proxy string) (map[string]interface{}, e
 		spec["checksumUrl"] = mirror(sum)
 	}
 	return spec, nil
+}
+
+// versionBefore reports whether a dotted release version ("1.12.8",
+// "1.13.0-beta.3") is older than ref, comparing the numeric parts only; a
+// pre-release of ref counts as ref.
+func versionBefore(version, ref string) bool {
+	parse := func(v string) []int {
+		v = strings.TrimPrefix(strings.TrimSpace(v), "v")
+		if i := strings.IndexAny(v, "-+"); i >= 0 {
+			v = v[:i]
+		}
+		var out []int
+		for _, part := range strings.Split(v, ".") {
+			n, err := strconv.Atoi(part)
+			if err != nil {
+				break
+			}
+			out = append(out, n)
+		}
+		return out
+	}
+	a, b := parse(version), parse(ref)
+	for i := 0; i < len(a) || i < len(b); i++ {
+		var x, y int
+		if i < len(a) {
+			x = a[i]
+		}
+		if i < len(b) {
+			y = b[i]
+		}
+		if x != y {
+			return x < y
+		}
+	}
+	return false
 }

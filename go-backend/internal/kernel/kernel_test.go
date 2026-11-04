@@ -323,8 +323,19 @@ func TestResolveDownload(t *testing.T) {
 	if err != nil || !strings.Contains(sl["url"].(string), "{VERSION}") || sl["github"].(map[string]interface{})["repo"] != "SagerNet/sing-box" {
 		t.Fatalf("sing-box latest must defer to the agent: %v %v", sl, err)
 	}
+	// 1.13+ ships a glibc-linked purego build without suffix; the static
+	// -musl build runs everywhere, Alpine included.
+	if sl["github"].(map[string]interface{})["asset"] != "sing-box-{VERSION}-linux-{ARCH}-musl.tar.gz" {
+		t.Fatalf("sing-box latest must use the static musl asset: %v", sl)
+	}
+	sm, _ := ResolveDownload(sb, "1.13.2", "")
+	if sm["url"] != "https://github.com/SagerNet/sing-box/releases/download/v1.13.2/sing-box-1.13.2-linux-{ARCH}-musl.tar.gz" ||
+		sm["github"].(map[string]interface{})["asset"] != "sing-box-{VERSION}-linux-{ARCH}-musl.tar.gz" {
+		t.Fatalf("sing-box 1.13 must use the musl asset: %v", sm)
+	}
 	sv, _ := ResolveDownload(sb, "1.12.8", "")
-	if sv["url"] != "https://github.com/SagerNet/sing-box/releases/download/v1.12.8/sing-box-1.12.8-linux-{ARCH}.tar.gz" || sv["github"].(map[string]interface{})["tag"] != "v1.12.8" {
+	if sv["url"] != "https://github.com/SagerNet/sing-box/releases/download/v1.12.8/sing-box-1.12.8-linux-{ARCH}.tar.gz" || sv["github"].(map[string]interface{})["tag"] != "v1.12.8" ||
+		sv["github"].(map[string]interface{})["asset"] != "sing-box-{VERSION}-linux-{ARCH}.tar.gz" {
 		t.Fatalf("sing-box pinned version: %v", sv)
 	}
 
@@ -620,5 +631,19 @@ func TestRealityMinClientVer(t *testing.T) {
 	bad := Inbound{ID: 2, Protocol: ProtocolVLESS, Port: 443, Security: Security{Type: SecurityReality, RealityMinClientVer: "v26"}}
 	if err := Normalize(TypeXray, &bad); err == nil {
 		t.Fatal("malformed version must be rejected")
+	}
+}
+
+func TestVersionBefore(t *testing.T) {
+	for _, c := range []struct {
+		v    string
+		want bool
+	}{
+		{"1.12.8", true}, {"v1.12.99", true}, {"1.9", true},
+		{"1.13.0", false}, {"1.13.0-beta.3", false}, {"1.13.2", false}, {"2.0.0", false},
+	} {
+		if got := versionBefore(c.v, "1.13.0"); got != c.want {
+			t.Errorf("versionBefore(%q, 1.13.0) = %v, want %v", c.v, got, c.want)
+		}
 	}
 }
