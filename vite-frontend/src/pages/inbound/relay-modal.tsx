@@ -293,8 +293,9 @@ export function RelayModal({
                               }
                             />
                             <Input
-                              label="分享地址"
-                              placeholder="默认入口 IP"
+                              description="客户端连接的中转入口地址或域名，不要填落地机地址"
+                              label="订阅地址（可选）"
+                              placeholder="留空使用入口 IP"
                               value={editing.shareHost}
                               variant="bordered"
                               onChange={(e) =>
@@ -371,6 +372,17 @@ export function RelayModal({
                                 : "无入口"}{" "}
                               → {rel.remoteAddr}
                             </p>
+                            {rel.shareHost ? (
+                              <p className="text-xs text-default-500 mt-0.5 break-all">
+                                订阅地址：
+                                <span className="font-mono">
+                                  {rel.shareHost}
+                                  {rel.entries.length > 0
+                                    ? `:${rel.entries[0].Port}`
+                                    : ""}
+                                </span>
+                              </p>
+                            ) : null}
                           </div>
                           {rel.forwardExists && (
                             <RelayLatencyCell
@@ -469,8 +481,9 @@ export function RelayModal({
                         }
                       />
                       <Input
-                        label="分享地址"
-                        placeholder="默认入口 IP"
+                        description="客户端连接的中转入口地址或域名，不要填落地机地址"
+                        label="订阅地址（可选）"
+                        placeholder="留空使用入口 IP"
                         value={form.shareHost}
                         variant="bordered"
                         onChange={(e) =>

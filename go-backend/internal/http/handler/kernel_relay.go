@@ -225,6 +225,10 @@ func (h *Handler) inboundRelayCreate(w http.ResponseWriter, r *http.Request) {
 		response.WriteJSON(w, response.ErrDefault("分享地址过长"))
 		return
 	}
+	if err := h.validateRelayShareHost(row, tunnel.ID, shareHost); err != nil {
+		response.WriteJSON(w, response.ErrDefault(err.Error()))
+		return
+	}
 
 	ppSend := 0
 	if row.AcceptProxyProtocol == 1 {
@@ -252,6 +256,38 @@ func (h *Handler) inboundRelayCreate(w http.ResponseWriter, r *http.Request) {
 	}
 	h.refreshInboundWhitelist(row.ID)
 	response.WriteJSON(w, response.OK(map[string]interface{}{"id": rel.ID, "forwardId": forwardID}))
+}
+
+// validateRelayShareHost rejects a relay share host that is the landing
+// node's own address: clients would then bypass the relay and dial the
+// landing node directly, while the panel (which shows and probes the real
+// entry) still reports the relay as working. A tunnel entering on the landing
+// node itself legitimately shares that address.
+func (h *Handler) validateRelayShareHost(row *model.NodeInbound, tunnelID int64, shareHost string) error {
+	host := strings.ToLower(strings.Trim(strings.TrimSpace(shareHost), "[]"))
+	if host == "" || row == nil {
+		return nil
+	}
+	if tunnelID > 0 {
+		if entries, err := h.tunnelEntryNodeIDs(tunnelID); err == nil {
+			for _, id := range entries {
+				if id == row.NodeID {
+					return nil
+				}
+			}
+		}
+	}
+	node, _ := h.repo.GetNodeByID(row.NodeID)
+	landing := []string{inboundShareAddress(row, node)}
+	if node != nil {
+		landing = append(landing, node.ServerIP, node.ServerIPV4.String, node.ServerIPV6.String)
+	}
+	for _, addr := range landing {
+		if a := strings.ToLower(strings.Trim(strings.TrimSpace(addr), "[]")); a != "" && a == host {
+			return errors.New("分享地址是落地节点自己的地址，客户端会绕过中转直连落地节点；请填写中转入口服务器的地址或域名，或留空使用入口 IP")
+		}
+	}
+	return nil
 }
 
 func firstNonEmpty(values ...string) string {
@@ -390,6 +426,17 @@ func (h *Handler) inboundRelayUpdate(w http.ResponseWriter, r *http.Request) {
 	if len(shareHost) > 255 {
 		response.WriteJSON(w, response.ErrDefault("分享地址过长"))
 		return
+	}
+	if shareHost != "" && shareHost != rel.ShareHost {
+		row, _ := h.repo.GetNodeInbound(rel.InboundID)
+		var tunnelID int64
+		if fwd, err := h.getForwardRecord(rel.ForwardID); err == nil && fwd != nil {
+			tunnelID = fwd.TunnelID
+		}
+		if err := h.validateRelayShareHost(row, tunnelID, shareHost); err != nil {
+			response.WriteJSON(w, response.ErrDefault(err.Error()))
+			return
+		}
 	}
 	if err := h.repo.UpdateInboundRelay(rel.ID, name, shareHost); err != nil {
 		response.WriteJSON(w, response.Err(-2, err.Error()))
