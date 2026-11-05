@@ -510,3 +510,13 @@ func (r *Repository) SetNodeInboundRelayOnly(id int64, relayOnly int) error {
 	}
 	return r.db.Model(&model.NodeInbound{}).Where("id = ?", id).Update("relay_only", relayOnly).Error
 }
+
+// SetNodeNftError records why a node's agent cannot use nftables ("" when it
+// can); the row is only written when the value changes.
+func (r *Repository) SetNodeNftError(nodeID int64, msg string) error {
+	if r == nil || r.db == nil {
+		return errors.New("repository not initialized")
+	}
+	return r.db.Model(&model.Node{}).Where("id = ? AND nft_error <> ?", nodeID, msg).
+		Update("nft_error", msg).Error
+}

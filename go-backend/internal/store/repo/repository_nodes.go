@@ -129,6 +129,7 @@ func (r *Repository) ListNodes() ([]map[string]interface{}, error) {
 			"sshConfig":               sshConfigByNodeID[n.ID],
 			"latencyTargets":          n.LatencyTargets,
 			"notifyEvents":            n.NotifyEvents,
+			"nftError":                n.NftError,
 		})
 	}
 	return items, nil

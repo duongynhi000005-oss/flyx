@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -41,9 +42,65 @@ var nftRunner = func(ctx context.Context, stdin string, args ...string) ([]byte,
 	return out, nil
 }
 
+// errNftDenied: nft is installed but the agent may not use it, as in
+// unprivileged LXC/OpenVZ containers. Permissions do not change while the
+// agent runs, so this is probed once.
+var errNftDenied = errors.New("本机没有 nftables 权限（常见于 LXC、OpenVZ 等容器），无法使用流量统计、入站白名单和端口跳跃")
+
+var nftProbe struct {
+	sync.Mutex
+	denied bool
+	ok     bool
+}
+
 var nftAvailable = func() error {
-	_, err := exec.LookPath("nft")
-	return err
+	if _, err := exec.LookPath("nft"); err != nil {
+		return err
+	}
+	return probeNftPermission(nftRunner)
+}
+
+// probeNftPermission lists the tables once to tell a usable nft from one the
+// kernel refuses. Only a definite answer is cached; a timeout is retried.
+func probeNftPermission(run func(ctx context.Context, stdin string, args ...string) ([]byte, error)) error {
+	nftProbe.Lock()
+	defer nftProbe.Unlock()
+	switch {
+	case nftProbe.denied:
+		return errNftDenied
+	case nftProbe.ok:
+		return nil
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	_, err := run(ctx, "", "list", "tables")
+	if err == nil {
+		nftProbe.ok = true
+		return nil
+	}
+	if nftPermissionError(err) {
+		nftProbe.denied = true
+		return errNftDenied
+	}
+	return nil // some other failure: let the real call report it
+}
+
+func nftPermissionError(err error) bool {
+	msg := strings.ToLower(err.Error())
+	for _, s := range []string{"operation not permitted", "permission denied", "you must be root"} {
+		if strings.Contains(msg, s) {
+			return true
+		}
+	}
+	return false
+}
+
+// nftUnavailableText explains why nftables cannot be used.
+func nftUnavailableText(err error) string {
+	if errors.Is(err, errNftDenied) {
+		return errNftDenied.Error()
+	}
+	return "未安装 nftables，无法统计流量"
 }
 
 type counterRule struct {
@@ -333,7 +390,10 @@ func (n *nftCounters) sync(ports []Port, users []int64) error {
 	n.mu.Lock()
 	defer n.mu.Unlock()
 	if err := nftAvailable(); err != nil {
-		n.lastErr = "未安装 nftables，无法统计流量"
+		n.lastErr = nftUnavailableText(err)
+		if errors.Is(err, errNftDenied) {
+			return err
+		}
 		return fmt.Errorf("未安装 nftables: %w", err)
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -372,7 +432,7 @@ func (n *nftCounters) read() ([]Counter, []UserCounter, string, error) {
 	n.mu.Lock()
 	defer n.mu.Unlock()
 	if err := nftAvailable(); err != nil {
-		return nil, nil, "", fmt.Errorf("未安装 nftables，无法统计流量")
+		return nil, nil, "", errors.New(nftUnavailableText(err))
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

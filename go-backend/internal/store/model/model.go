@@ -101,6 +101,9 @@ type Node struct {
 	LatencyTargets string `gorm:"column:latency_targets;type:text;not null;default:''"`
 	// NotifyEvents holds JSON event overrides; absent events follow global settings.
 	NotifyEvents string `gorm:"column:notify_events;type:text;not null;default:''"`
+	// NftError is why the agent cannot use nftables (not installed, no
+	// permission in a container), as last reported; empty when it can.
+	NftError string `gorm:"column:nft_error;type:text;not null;default:''"`
 }
 
 func (Node) TableName() string { return "node" }

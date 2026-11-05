@@ -997,6 +997,17 @@ function Editor({
                       刷新
                     </button>
                   </p>
+                  {preview.inactiveRelays &&
+                    preview.inactiveRelays.length > 0 && (
+                      <p className="text-xs text-warning">
+                        另有 {preview.inactiveRelays.length}{" "}
+                        条中转未包含在订阅中：
+                        {preview.inactiveRelays
+                          .map((r) => `${r.name}（${r.reason}）`)
+                          .join("、")}
+                        。在中转页恢复转发后会自动加入
+                      </p>
+                    )}
                   <div className="max-h-96 overflow-y-auto rounded-lg border border-divider">
                     {preview.items.length === 0 ? (
                       <p className="p-3 text-xs text-default-500">没有节点</p>

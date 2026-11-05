@@ -718,6 +718,11 @@ func (h *Handler) inboundSave(w http.ResponseWriter, r *http.Request, update boo
 		response.WriteJSON(w, response.ErrDefault(err.Error()))
 		return
 	}
+	if req.RelayWhitelist && strings.TrimSpace(node.NftError) != "" {
+		// The agent stops a whitelisted kernel it cannot protect.
+		response.WriteJSON(w, response.ErrDefault("该服务器无法使用入站白名单："+node.NftError))
+		return
+	}
 	row.ShareAddressMode = mode
 	if mode != "custom" {
 		req.ShareHost = ""
@@ -1659,6 +1664,13 @@ func (h *Handler) pollNodeKernels(nodeID int64, evenIfNone bool) {
 	if err := remarshal(res.Data, &status); err != nil {
 		log.Printf("kernel status decode failed node_id=%d err=%v", nodeID, err)
 		return
+	}
+	nftErr := strings.TrimSpace(status.NftError)
+	if status.NftAvailable {
+		nftErr = ""
+	}
+	if err := h.repo.SetNodeNftError(nodeID, truncate(nftErr, 500)); err != nil {
+		log.Printf("nft status save failed node_id=%d err=%v", nodeID, err)
 	}
 
 	now := time.Now().UnixMilli()

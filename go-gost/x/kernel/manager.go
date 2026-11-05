@@ -37,6 +37,8 @@ type Manager struct {
 	restoreOnce sync.Once
 	instances   map[string]*instance
 	nft         *nftCounters
+	// lastNftErr is the last nftables sync failure logged (guarded by mu).
+	lastNftErr string
 }
 
 var (
@@ -144,12 +146,21 @@ func (m *Manager) allUserMarks() []int64 {
 func (m *Manager) syncNft() error {
 	err := m.nft.sync(m.allPorts(), m.allUserMarks())
 	if err == nil {
+		m.mu.Lock()
+		m.lastNftErr = ""
+		m.mu.Unlock()
 		return nil
 	}
 	m.mu.Lock()
+	// The same failure repeats on every apply (e.g. no permission in a
+	// container); log it once per kernel instead of on every change.
+	logIt := err.Error() != m.lastNftErr
+	m.lastNftErr = err.Error()
 	var guarded []*instance
 	for _, inst := range m.instances {
-		inst.logs.add("[flyx] nftables 规则同步失败: " + err.Error())
+		if logIt {
+			inst.logs.add("[flyx] nftables 规则同步失败: " + err.Error())
+		}
 		if !inst.req.Enabled {
 			continue
 		}
@@ -526,7 +537,11 @@ func (m *Manager) Status(logsFor string) Status {
 		out.Kernels = append(out.Kernels, m.state(t, t == logsFor))
 	}
 	if len(m.allPorts()) == 0 {
-		out.NftAvailable = nftAvailable() == nil
+		if err := nftAvailable(); err != nil {
+			out.NftError = nftUnavailableText(err)
+		} else {
+			out.NftAvailable = true
+		}
 		return out
 	}
 	counters, users, epoch, err := m.nft.read()

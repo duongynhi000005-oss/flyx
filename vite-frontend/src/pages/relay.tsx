@@ -85,7 +85,7 @@ function RelayLines({
           >
             <span
               className={`h-1.5 w-1.5 shrink-0 rounded-full ${ok ? "bg-success" : "bg-warning"}`}
-              title={ok ? "转发正常" : "转发已暂停或被删除"}
+              title={ok ? "转发正常" : "转发已暂停或被删除，不会出现在订阅中"}
             />
             <span
               className="min-w-0 flex-1 truncate text-sm text-default-700"

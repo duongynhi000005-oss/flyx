@@ -1209,6 +1209,8 @@ export interface SubPreview {
   items: SubPreviewItem[];
   total: number;
   dropped: number;
+  /** Relays of the picked inbounds left out because their forward is paused or deleted. */
+  inactiveRelays?: { name: string; reason: string }[];
   /** The picked templates' groups with these nodes. */
   templates?: Partial<
     Record<

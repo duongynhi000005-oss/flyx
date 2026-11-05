@@ -1155,6 +1155,9 @@ export function InboundFormModal({
                         </div>
                         <div className="flex items-start gap-2">
                           <Switch
+                            isDisabled={
+                              !!selectedNode?.nftError && !form.relayWhitelist
+                            }
                             isSelected={form.relayWhitelist}
                             size="sm"
                             onValueChange={(v) => set("relayWhitelist", v)}
@@ -1168,6 +1171,12 @@ export function InboundFormModal({
                               和本机，其他来源访问该端口一律丢弃；需要服务器安装
                               nftables
                             </p>
+                            {selectedNode?.nftError ? (
+                              <p className="text-xs text-danger mt-0.5">
+                                该服务器无法使用：{selectedNode.nftError}
+                                {form.relayWhitelist ? "。请关闭后再保存" : ""}
+                              </p>
+                            ) : null}
                           </div>
                         </div>
                         {form.relayWhitelist && (

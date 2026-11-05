@@ -832,11 +832,53 @@ func (h *Handler) subscriptionPreview(w http.ResponseWriter, r *http.Request) {
 		templates[kind] = view
 	}
 	response.WriteJSON(w, response.OK(map[string]interface{}{
-		"items":     items,
-		"total":     len(source),
-		"dropped":   len(source) - len(items),
-		"templates": templates,
+		"items":          items,
+		"total":          len(source),
+		"dropped":        len(source) - len(items),
+		"templates":      templates,
+		"inactiveRelays": h.inactiveRelays(c, c.inboundIDs(draft)),
 	}))
+}
+
+type inactiveRelay struct {
+	Name   string `json:"name"`
+	Reason string `json:"reason"`
+}
+
+// inactiveRelays are the relays of these (enabled) inbounds that the
+// subscription leaves out because their forward is paused or deleted; the
+// preview lists them so a relay does not vanish without a word.
+func (h *Handler) inactiveRelays(c *subContext, inboundIDs []int64) []inactiveRelay {
+	enabled := map[int64]bool{}
+	for _, row := range c.rows {
+		enabled[row.ID] = row.Enabled == 1
+	}
+	want := map[int64]bool{}
+	for _, id := range inboundIDs {
+		if enabled[id] {
+			want[id] = true
+		}
+	}
+	out := []inactiveRelay{}
+	if len(want) == 0 {
+		return out
+	}
+	relays, err := h.relayViews(0)
+	if err != nil {
+		return out
+	}
+	for _, rel := range relays {
+		if !want[rel.InboundID] {
+			continue
+		}
+		switch {
+		case !rel.ForwardExists:
+			out = append(out, inactiveRelay{Name: rel.Name, Reason: "转发已删除"})
+		case rel.ForwardStatus != 1:
+			out = append(out, inactiveRelay{Name: rel.Name, Reason: "转发已暂停"})
+		}
+	}
+	return out
 }
 
 // inboundSubInfo is the pre-3.1 single-subscription API: the default

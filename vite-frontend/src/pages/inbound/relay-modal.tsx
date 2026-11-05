@@ -28,8 +28,7 @@ import {
 } from "@/shadcn-bridge/heroui/modal";
 import { Select, SelectItem } from "@/shadcn-bridge/heroui/select";
 
-const modalBase =
-  "!w-[calc(100%-32px)] !mx-auto sm:!w-full overflow-hidden";
+const modalBase = "!w-[calc(100%-32px)] !mx-auto sm:!w-full overflow-hidden";
 
 function isLoopback(listen: string) {
   return listen === "::1" || listen.startsWith("127.");
@@ -372,6 +371,13 @@ export function RelayModal({
                                 : "无入口"}{" "}
                               → {rel.remoteAddr}
                             </p>
+                            {!(rel.forwardExists && rel.forwardStatus === 1) ? (
+                              <p className="text-xs text-warning mt-0.5">
+                                {rel.forwardExists
+                                  ? "转发已暂停，这条中转暂不出现在订阅和分享链接中"
+                                  : "转发已删除，这条中转不会出现在订阅和分享链接中"}
+                              </p>
+                            ) : null}
                             {rel.shareHost ? (
                               <p className="text-xs text-default-500 mt-0.5 break-all">
                                 订阅地址：

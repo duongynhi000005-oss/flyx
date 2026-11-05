@@ -8,6 +8,8 @@ export interface NodeApiItem {
   sshConfig?: NodeSshConfigApiItem | null;
   inx?: number;
   notifyEvents?: NodeNotifyEvents;
+  /** Why the agent cannot use nftables (no permission, not installed). */
+  nftError?: string;
   remark?: string;
   expiryTime?: number;
   renewalCycle?: "month" | "quarter" | "year" | "";
