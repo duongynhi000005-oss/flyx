@@ -407,8 +407,9 @@ export default function ForwardPage({
   const tunnelInIpOptionMap = useMemo(() => {
     const map = new Map<number, string[]>();
     const nodeMap = new Map<number, Node>(nodes.map((n) => [n.id, n]));
+    const targetTunnels = allTunnels.length > 0 ? allTunnels : (tunnels as any[]);
 
-    for (const tunnel of allTunnels) {
+    for (const tunnel of targetTunnels) {
       const collected: string[] = [];
       const entryNodes = tunnel.inNodeId || [];
 
@@ -419,16 +420,24 @@ export default function ForwardPage({
       if (collected.length === 0) {
         (tunnel.inIp || "")
           .split(",")
-          .map((v) => v.trim())
-          .filter((v) => v)
-          .forEach((v) => collected.push(v));
+          .map((v: string) => v.trim())
+          .filter((v: string) => v)
+          .forEach((v: string) => collected.push(v));
+      }
+
+      if (collected.length === 0 && Array.isArray((tunnel as any).inIps)) {
+        for (const ip of (tunnel as any).inIps) {
+          if (ip && typeof ip === "string") {
+            collected.push(ip.trim());
+          }
+        }
       }
 
       map.set(tunnel.id, Array.from(new Set(collected)));
     }
 
     return map;
-  }, [allTunnels, nodes]);
+  }, [allTunnels, tunnels, nodes]);
 
   const currentTunnelIpOptions = useMemo(() => {
     if (!form.tunnelId) {
@@ -443,19 +452,20 @@ export default function ForwardPage({
       return false;
     }
 
-    const currentTunnel = allTunnels.find(
+    const currentTunnel = (allTunnels.length > 0 ? allTunnels : (tunnels as any[])).find(
       (tunnel) => tunnel.id === form.tunnelId,
     );
 
-    return (currentTunnel?.inNodeId?.length || 0) > 1;
-  }, [allTunnels, form.tunnelId]);
+    const entranceCount = currentTunnel?.inNodeId?.length ?? (currentTunnel as any)?.inNodeNum ?? 0;
+    return entranceCount > 1;
+  }, [allTunnels, tunnels, form.tunnelId]);
 
   const currentTunnelPortRange = useMemo(() => {
     if (!form.tunnelId) {
       return null;
     }
 
-    const currentTunnel = allTunnels.find(
+    const currentTunnel = (allTunnels.length > 0 ? allTunnels : (tunnels as any[])).find(
       (tunnel) => tunnel.id === form.tunnelId,
     );
 
@@ -472,7 +482,7 @@ export default function ForwardPage({
     }
 
     return null;
-  }, [allTunnels, form.tunnelId]);
+  }, [allTunnels, tunnels, form.tunnelId]);
 
   useEffect(() => {
     return () => {

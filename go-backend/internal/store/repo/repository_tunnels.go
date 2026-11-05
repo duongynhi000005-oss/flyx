@@ -1,6 +1,7 @@
 package repo
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"sort"
@@ -8,6 +9,113 @@ import (
 
 	"go-backend/internal/store/model"
 )
+
+type tunnelEntryInfo struct {
+	entryCount int
+	inIps      []string
+}
+
+func (r *Repository) getTunnelEntryInfo(tunnelIDs []int64, tunnelInIPs map[int64]string) map[int64]tunnelEntryInfo {
+	result := make(map[int64]tunnelEntryInfo)
+	if len(tunnelIDs) == 0 {
+		return result
+	}
+
+	type entryNode struct {
+		TunnelID int64
+		NodeID   int64
+	}
+	var entries []entryNode
+	r.db.Model(&model.ChainTunnel{}).
+		Select("tunnel_id, node_id").
+		Where("tunnel_id IN (?) AND chain_type = ?", tunnelIDs, "1").
+		Order("id ASC").
+		Find(&entries)
+
+	tunnelEntries := make(map[int64][]int64)
+	nodeSet := make(map[int64]struct{})
+	nodeIDs := make([]int64, 0)
+	for _, e := range entries {
+		tunnelEntries[e.TunnelID] = append(tunnelEntries[e.TunnelID], e.NodeID)
+		if _, exists := nodeSet[e.NodeID]; !exists {
+			nodeSet[e.NodeID] = struct{}{}
+			nodeIDs = append(nodeIDs, e.NodeID)
+		}
+	}
+
+	type nodeIPInfo struct {
+		ID         int64
+		ServerIP   string
+		ServerIPV4 sql.NullString
+		ServerIPV6 sql.NullString
+		ExtraIPs   sql.NullString
+	}
+	var nodes []nodeIPInfo
+	if len(nodeIDs) > 0 {
+		r.db.Model(&model.Node{}).
+			Select("id, server_ip, server_ip_v4, server_ip_v6, extra_ips").
+			Where("id IN (?)", nodeIDs).
+			Find(&nodes)
+	}
+
+	nodeIPMap := make(map[int64][]string)
+	for _, n := range nodes {
+		var ips []string
+		add := func(v string) {
+			trimmed := strings.TrimSpace(v)
+			if trimmed != "" {
+				ips = append(ips, trimmed)
+			}
+		}
+		if n.ServerIPV4.Valid {
+			add(n.ServerIPV4.String)
+		}
+		if n.ServerIPV6.Valid {
+			add(n.ServerIPV6.String)
+		}
+		add(n.ServerIP)
+		if n.ExtraIPs.Valid && strings.TrimSpace(n.ExtraIPs.String) != "" {
+			for _, part := range strings.Split(n.ExtraIPs.String, ",") {
+				add(part)
+			}
+		}
+		nodeIPMap[n.ID] = ips
+	}
+
+	for _, tid := range tunnelIDs {
+		var allIPs []string
+		seen := make(map[string]struct{})
+		addUnique := func(ip string) {
+			trimmed := strings.TrimSpace(ip)
+			if trimmed != "" {
+				if _, ok := seen[trimmed]; !ok {
+					seen[trimmed] = struct{}{}
+					allIPs = append(allIPs, trimmed)
+				}
+			}
+		}
+
+		entryNodeIDs := tunnelEntries[tid]
+		for _, nid := range entryNodeIDs {
+			for _, ip := range nodeIPMap[nid] {
+				addUnique(ip)
+			}
+		}
+
+		if inIP, ok := tunnelInIPs[tid]; ok && inIP != "" {
+			for _, part := range strings.Split(inIP, ",") {
+				addUnique(part)
+			}
+		}
+
+		result[tid] = tunnelEntryInfo{
+			entryCount: len(entryNodeIDs),
+			inIps:      allIPs,
+		}
+	}
+
+	return result
+}
 
 func (r *Repository) ListUserAccessibleTunnels(userID int64) ([]map[string]interface{}, error) {
 	if r == nil || r.db == nil {
@@ -17,10 +125,11 @@ func (r *Repository) ListUserAccessibleTunnels(userID int64) ([]map[string]inter
 	type row struct {
 		ID   int64
 		Name string
+		InIP sql.NullString
 	}
 	var rows []row
 	err := r.db.Model(&model.UserTunnel{}).
-		Select("tunnel.id, tunnel.name").
+		Select("tunnel.id, tunnel.name, tunnel.in_ip").
 		Joins("JOIN tunnel ON tunnel.id = user_tunnel.tunnel_id").
 		Where("user_tunnel.user_id = ? AND tunnel.status = 1", userID).
 		Order("tunnel.inx ASC, tunnel.id ASC").
@@ -30,10 +139,15 @@ func (r *Repository) ListUserAccessibleTunnels(userID int64) ([]map[string]inter
 	}
 
 	tunnelIDs := make([]int64, 0, len(rows))
+	tunnelInIPs := make(map[int64]string, len(rows))
 	for _, rw := range rows {
 		tunnelIDs = append(tunnelIDs, rw.ID)
+		if rw.InIP.Valid {
+			tunnelInIPs[rw.ID] = rw.InIP.String
+		}
 	}
 	portRangeMap := r.getTunnelEntryPortRanges(tunnelIDs)
+	entryInfoMap := r.getTunnelEntryInfo(tunnelIDs, tunnelInIPs)
 
 	items := make([]map[string]interface{}, 0, len(rows))
 	for _, rw := range rows {
@@ -41,6 +155,15 @@ func (r *Repository) ListUserAccessibleTunnels(userID int64) ([]map[string]inter
 		if pr, ok := portRangeMap[rw.ID]; ok {
 			item["portRangeMin"] = pr.min
 			item["portRangeMax"] = pr.max
+		}
+		if entry, ok := entryInfoMap[rw.ID]; ok {
+			item["inNodeNum"] = entry.entryCount
+			item["inIp"] = strings.Join(entry.inIps, ",")
+			item["inIps"] = entry.inIps
+		} else {
+			item["inNodeNum"] = 0
+			item["inIp"] = ""
+			item["inIps"] = []string{}
 		}
 		items = append(items, item)
 	}
@@ -55,18 +178,24 @@ func (r *Repository) ListEnabledTunnelSummaries() ([]map[string]interface{}, err
 	type row struct {
 		ID   int64
 		Name string
+		InIP sql.NullString
 	}
 	var rows []row
-	err := r.db.Model(&model.Tunnel{}).Select("id, name").Where("status = 1").Order("inx ASC, id ASC").Find(&rows).Error
+	err := r.db.Model(&model.Tunnel{}).Select("id, name, in_ip").Where("status = 1").Order("inx ASC, id ASC").Find(&rows).Error
 	if err != nil {
 		return nil, err
 	}
 
 	tunnelIDs := make([]int64, 0, len(rows))
+	tunnelInIPs := make(map[int64]string, len(rows))
 	for _, rw := range rows {
 		tunnelIDs = append(tunnelIDs, rw.ID)
+		if rw.InIP.Valid {
+			tunnelInIPs[rw.ID] = rw.InIP.String
+		}
 	}
 	portRangeMap := r.getTunnelEntryPortRanges(tunnelIDs)
+	entryInfoMap := r.getTunnelEntryInfo(tunnelIDs, tunnelInIPs)
 
 	items := make([]map[string]interface{}, 0, len(rows))
 	for _, rw := range rows {
@@ -74,6 +203,15 @@ func (r *Repository) ListEnabledTunnelSummaries() ([]map[string]interface{}, err
 		if pr, ok := portRangeMap[rw.ID]; ok {
 			item["portRangeMin"] = pr.min
 			item["portRangeMax"] = pr.max
+		}
+		if entry, ok := entryInfoMap[rw.ID]; ok {
+			item["inNodeNum"] = entry.entryCount
+			item["inIp"] = strings.Join(entry.inIps, ",")
+			item["inIps"] = entry.inIps
+		} else {
+			item["inNodeNum"] = 0
+			item["inIp"] = ""
+			item["inIps"] = []string{}
 		}
 		items = append(items, item)
 	}

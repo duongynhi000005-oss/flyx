@@ -111,6 +111,19 @@ func TestUserTunnelVisibleListContracts(t *testing.T) {
 		if ids[disabledC] {
 			t.Fatalf("did not expect disabled tunnel for user")
 		}
+
+		for _, item := range out.Data.([]interface{}) {
+			obj := item.(map[string]interface{})
+			if _, ok := obj["inNodeNum"]; !ok {
+				t.Fatalf("expected inNodeNum in tunnel item: %v", obj)
+			}
+			if _, ok := obj["inIp"]; !ok {
+				t.Fatalf("expected inIp in tunnel item: %v", obj)
+			}
+			if _, ok := obj["inIps"]; !ok {
+				t.Fatalf("expected inIps in tunnel item: %v", obj)
+			}
+		}
 	})
 }
 

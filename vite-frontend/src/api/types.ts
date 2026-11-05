@@ -103,6 +103,11 @@ export interface UserTunnelApiItem {
   inNodePortSta?: number;
   inNodePortEnd?: number;
   speedId?: number | null;
+  inIp?: string;
+  inIps?: string[];
+  inNodeNum?: number;
+  portRangeMin?: number;
+  portRangeMax?: number;
   [key: string]: unknown;
 }
 
