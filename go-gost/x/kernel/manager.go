@@ -172,15 +172,28 @@ func (m *Manager) syncNft() error {
 	return err
 }
 
-// ensureBinary installs a binary into dir unless it is already there.
+// ensureBinary installs a binary into dir unless a runnable copy is already
+// there. A copy that cannot run here (wrong CPU, missing dynamic loader) is
+// removed and installed again, so a bad download does not stick forever.
 func (m *Manager) ensureBinary(inst *instance, label string, d *Download, dir string) (string, error) {
 	path := filepath.Join(dir, d.BinName)
 	if _, err := os.Stat(path); err == nil {
-		return path, nil
+		bad := checkRunnable(path)
+		if bad == nil {
+			return path, nil
+		}
+		inst.logs.add(fmt.Sprintf("[flyx] 已安装的 %s 无法在本机运行（%v），重新安装", label, bad))
+		if err := os.RemoveAll(dir); err != nil {
+			return "", fmt.Errorf("删除无法运行的 %s 失败: %v", label, err)
+		}
 	}
 	inst.logs.add(fmt.Sprintf("[flyx] 安装 %s", label))
 	if err := install(d, dir); err != nil {
 		return "", fmt.Errorf("安装 %s 失败: %v", label, err)
+	}
+	if bad := checkRunnable(path); bad != nil {
+		_ = os.RemoveAll(dir)
+		return "", fmt.Errorf("安装的 %s 无法在本机运行: %v", label, bad)
 	}
 	inst.logs.add(fmt.Sprintf("[flyx] %s 安装完成", label))
 	return path, nil

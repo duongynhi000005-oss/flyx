@@ -88,3 +88,57 @@ func TestUpdateServicesSkipsUnchangedServiceWithoutRestart(t *testing.T) {
 		t.Fatalf("expected existing service to remain registered")
 	}
 }
+
+// A rejected batch must release the ports of the services it already
+// opened, or retrying the same batch fails with "address already in use".
+func TestCreateServicesFailureReleasesPorts(t *testing.T) {
+	corelogger.SetDefault(xlogger.Nop())
+	originalConfig := config.Global()
+	t.Cleanup(func() { config.Set(originalConfig) })
+	config.Set(&config.Config{})
+
+	freePort := func() string {
+		ln, err := net.Listen("tcp", "127.0.0.1:0")
+		if err != nil {
+			t.Fatal(err)
+		}
+		addr := ln.Addr().String()
+		ln.Close()
+		return addr
+	}
+	tcp := func(name, addr string) config.ServiceConfig {
+		return config.ServiceConfig{Name: name, Addr: addr, Handler: &config.HandlerConfig{Type: "auto"}, Listener: &config.ListenerConfig{Type: "tcp"}}
+	}
+
+	existing := "create_batch_existing_tdd"
+	registry.ServiceRegistry().Unregister(existing)
+	if err := registry.ServiceRegistry().Register(existing, service.Service(&recordingService{})); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { registry.ServiceRegistry().Unregister(existing) })
+
+	for _, c := range []struct {
+		name string
+		last config.ServiceConfig
+	}{
+		{"parse failure", config.ServiceConfig{Name: "create_batch_broken_tdd", Listener: &config.ListenerConfig{Type: "listener-does-not-exist"}}},
+		{"name taken", config.ServiceConfig{Name: existing}},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			addr := freePort()
+			first := tcp("create_batch_first_tdd", addr)
+			t.Cleanup(func() { registry.ServiceRegistry().Unregister(first.Name) })
+			if err := createServices(createServicesRequest{Data: []config.ServiceConfig{first, c.last}}); err == nil {
+				t.Fatal("expected the batch to fail")
+			}
+			if registry.ServiceRegistry().IsRegistered(first.Name) {
+				t.Fatal("failed batch left a service registered")
+			}
+			ln, err := net.Listen("tcp", addr)
+			if err != nil {
+				t.Fatalf("port of the failed batch still in use: %v", err)
+			}
+			ln.Close()
+		})
+	}
+}

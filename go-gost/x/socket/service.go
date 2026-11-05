@@ -32,20 +32,28 @@ func createServices(req createServicesRequest) error {
 		service service.Service
 	}
 
+	// Services parsed so far already listen on their ports; release them
+	// when the batch is rejected.
+	abort := func(err error) error {
+		for _, ps := range parsedServices {
+			closeService(ps.service)
+		}
+		return err
+	}
 	for _, serviceConfig := range req.Data {
 		name := strings.TrimSpace(serviceConfig.Name)
 		if name == "" {
-			return errors.New("service name is required")
+			return abort(errors.New("service name is required"))
 		}
 		serviceConfig.Name = name
 
 		if registry.ServiceRegistry().IsRegistered(name) {
-			return errors.New("service " + name + " already exists")
+			return abort(errors.New("service " + name + " already exists"))
 		}
 
 		svc, err := parser.ParseService(&serviceConfig)
 		if err != nil {
-			return errors.New("create service " + name + " failed: " + err.Error())
+			return abort(errors.New("create service " + name + " failed: " + err.Error()))
 		}
 
 		parsedServices = append(parsedServices, struct {
@@ -56,13 +64,17 @@ func createServices(req createServicesRequest) error {
 
 	// 第二阶段：注册所有服务
 	var registeredServices []string
-	for _, ps := range parsedServices {
+	for i, ps := range parsedServices {
 		if err := registry.ServiceRegistry().Register(ps.config.Name, ps.service); err != nil {
-			// 如果注册失败，回滚已注册的服务
+			// 如果注册失败，回滚已注册的服务（Unregister 会关闭监听），
+			// 并关闭尚未注册的服务，释放它们占用的端口。
 			for _, regName := range registeredServices {
 				if registry.ServiceRegistry().Get(regName) != nil {
 					registry.ServiceRegistry().Unregister(regName)
 				}
+			}
+			for _, rest := range parsedServices[i:] {
+				closeService(rest.service)
 			}
 			return errors.New("service " + ps.config.Name + " already exists")
 		}
@@ -630,4 +642,12 @@ type updateServicesRequest struct {
 
 type createServicesRequest struct {
 	Data []config.ServiceConfig `json:"data"`
+}
+
+// closeService releases the listener of a parsed service that never made it
+// into the registry.
+func closeService(svc service.Service) {
+	if svc != nil {
+		_ = svc.Close()
+	}
 }
